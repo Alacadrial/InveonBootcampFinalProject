@@ -49,6 +49,19 @@ namespace Inveon.Services.Identity
                         "inveon"
                     }
                 },
+                new Client
+                {
+                    ClientId="react_client",
+                    ClientSecrets= { new Secret("react_secret".Sha256())},
+                    AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
+                    AllowedScopes = new List<string>
+                    {
+                    IdentityServerConstants.StandardScopes.OpenId,
+                    IdentityServerConstants.StandardScopes.Profile,
+                    IdentityServerConstants.StandardScopes.Email,
+                    "inveon"
+                    }
+                },
             };
     }
 }

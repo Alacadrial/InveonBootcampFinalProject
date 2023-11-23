@@ -30,7 +30,7 @@
 
 
   <ItemGroup>
-    <ProjectReference Include="..\..\4.gun\MicroserviceInveonOrnek\Inveon.MessageBus\Inveon.MessageBus.csproj" />
+    <ProjectReference Include="..\Inveon.MessageBus\Inveon.MessageBus.csproj" />
   </ItemGroup>
 
 </Project>

@@ -43,22 +43,9 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
 
         public async Task<CartDto> CreateUpdateCart(CartDto cartDto)
         {
+            // Changed to work with an entire list instead of single product.
 
             Cart cart = _mapper.Map<Cart>(cartDto);
-            // cart.CartHeader.CouponCode = "yok";
-            //check if product exists in database, if not create it!
-            var prodInDb = await _db.Products
-                .FirstOrDefaultAsync(u => u.ProductId == cartDto.CartDetails.FirstOrDefault()
-                .ProductId);
-            if (prodInDb == null)
-            {
-                _db.Products.Add(cart.CartDetails.FirstOrDefault().Product);
-                await _db.SaveChangesAsync();
-            }
-
-
-            //check if header is null
-
             var cartHeaderFromDb = await _db.CartHeaders.AsNoTracking()
                 .FirstOrDefaultAsync(u => u.UserId == cart.CartHeader.UserId);
 
@@ -67,41 +54,50 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
                 //create header and details
                 _db.CartHeaders.Add(cart.CartHeader);
                 await _db.SaveChangesAsync();
-                cart.CartDetails.FirstOrDefault().CartHeaderId = cart.CartHeader.CartHeaderId;
-                cart.CartDetails.FirstOrDefault().Product = null;
-                _db.CartDetails.Add(cart.CartDetails.FirstOrDefault());
+                foreach (var item in cart.CartDetails.ToList())
+                {
+                    item.CartHeaderId = cart.CartHeader.CartHeaderId;
+                    item.Product = null;
+                    _db.CartDetails.Add(item);
+                }                
                 await _db.SaveChangesAsync();
             }
             else
             {
                 //if header is not null
-                //check if details has same product
-                var cartDetailsFromDb = await _db.CartDetails.AsNoTracking().FirstOrDefaultAsync(
-                    u => u.ProductId == cart.CartDetails.FirstOrDefault().ProductId &&
+                var itemIds = cart.CartDetails.Select(item => item.ProductId);
+                var itemsToRemove = _db.CartDetails.Where(dbItem => !itemIds.Contains(dbItem.ProductId)).ToList();
+
+                // Again changed to make it work with list of products.
+                foreach (var item in cart.CartDetails.ToList())
+                {
+                    //check if details has same product
+                    var cartDetailsFromDb = await _db.CartDetails.AsNoTracking().FirstOrDefaultAsync(
+                    u => u.ProductId == item.ProductId &&
                     u.CartHeaderId == cartHeaderFromDb.CartHeaderId);
-
-                if (cartDetailsFromDb == null)
-                {
-                    //create details
-                    cart.CartDetails.FirstOrDefault().CartHeaderId = cartHeaderFromDb.CartHeaderId;
-                    cart.CartDetails.FirstOrDefault().Product = null;
-                    _db.CartDetails.Add(cart.CartDetails.FirstOrDefault());
-                    await _db.SaveChangesAsync();
+                    if (cartDetailsFromDb == null)
+                    {
+                        //create details
+                        item.CartHeaderId = cartHeaderFromDb.CartHeaderId;
+                        item.Product = null;
+                        _db.CartDetails.Add(item);
+                    }
+                    else
+                    {
+                        //update the count / cart details
+                        item.Product = null;
+                        item.CartDetailsId = cartDetailsFromDb.CartDetailsId;
+                        item.CartHeaderId = cartDetailsFromDb.CartHeaderId;
+                        _db.CartDetails.Update(item);
+                    }
                 }
-                else
+                foreach(var item in itemsToRemove)
                 {
-                    //update the count / cart details
-                    cart.CartDetails.FirstOrDefault().Product = null;
-                    cart.CartDetails.FirstOrDefault().Count += cartDetailsFromDb.Count;
-                    cart.CartDetails.FirstOrDefault().CartDetailsId = cartDetailsFromDb.CartDetailsId;
-                    cart.CartDetails.FirstOrDefault().CartHeaderId = cartDetailsFromDb.CartHeaderId;
-                    _db.CartDetails.Update(cart.CartDetails.FirstOrDefault());
-                    await _db.SaveChangesAsync();
+                    _db.CartDetails.Remove(item);
                 }
+                await _db.SaveChangesAsync();
             }
-
             return _mapper.Map<CartDto>(cart);
-
         }
 
         public async Task<CartDto> GetCartByUserId(string userId)

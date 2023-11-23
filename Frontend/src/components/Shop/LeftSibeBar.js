@@ -1,18 +1,27 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import SideBar from './SideBar'
 import ProductCard from '../Common/Product/ProductCard'
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { getProductsAsync, updateProducts } from '../../app/slices/product';
+import { PRODUCT_URL } from '../../urls/apiUrls';
+import axios from 'axios';
+
 const LeftSideBar = () => {
-   
-    const [products, setProducts] = useState(useSelector((state) => state.products.products))
+
+    const dispatch = useDispatch();
+    useEffect(() => {
+        dispatch(getProductsAsync());
+    }, [dispatch]);
+
+    const products = useSelector((state) => state.products.products)
     const [page, setPage] = useState(1)
     let allData = [...useSelector((state) => state.products.products)];
-
+    
     const randProduct = (page) => {
         if(page){
             let data = allData.sort((a, b) => 0.5 - Math.random())
             data = data.slice(0,9);
-            setProducts(data);
+            // setProducts(data);
             setPage(page);
         }
     }

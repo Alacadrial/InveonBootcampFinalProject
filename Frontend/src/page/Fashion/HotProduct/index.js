@@ -1,11 +1,18 @@
 import Heading from "../Heading"
 import React from "react"
-import {useSelector}  from "react-redux";
+import {useSelector, useDispatch}  from "react-redux";
+import { useEffect } from "react";
+import axios from "axios";
+import { PRODUCT_URL } from "../../../urls/apiUrls";
+import { getProductsAsync, updateProducts } from "../../../app/slices/product";
 import ProductCard from "../../../components/Common/Product/ProductCard"; 
-const HotProduct = () => {
-     
-         let TumUrunler =  useSelector((state)=> state.products.products);
 
+const HotProduct = () => {
+    const dispatch = useDispatch();
+    useEffect(() => {
+        dispatch(getProductsAsync());
+    }, [dispatch]);
+    let TumUrunler =  useSelector((state)=> state.products.products);
     return(
         <>
         <section id="hot-Product_area" className="ptb-100">

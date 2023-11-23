@@ -1,49 +1,57 @@
 import ProductInfo from './ProductInfo'
 import RelatedProduct from './RelatedProduct'
-import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from 'react-router-dom';
 import { RatingStar } from "rating-star";
+import { getProductByIdAsync } from '../../../app/slices/product';
 
 const ProductDetailsTwo = () => {
-    let dispatch = useDispatch();
     let { id } = useParams();
-    dispatch({ type: "products/getProductById", payload: { id } });
-    let product = useSelector((state) => state.products.single);
+    let dispatch = useDispatch();
 
-    // Add to cart
-    const addToCart = async (id) => {
-        dispatch({ type: "products/AddToCart", payload: { id } })
-    }
+    const { single, status, error } = useSelector((state) => state.products);
+    const [product, setProduct] = useState(null);
 
-    // Add to Favorite
-    const addToFav = async (id) => {
-        dispatch({ type: "products/addToFavorites", payload: { id } })
-    }
+    useEffect(() => {
+        // Ensure that this is only dispatched once when the component mounts
+        dispatch(getProductByIdAsync(id));
+    }, [dispatch]); 
+    
+    useEffect(()=>{
+        setProduct(single);
+    }, [single])
 
- 
     // Quenty Inc Dec
     const [count, setCount] = useState(1)
+
     const incNum = () => {
         setCount(count + 1)
     }
     const decNum = () => {
-        if (count > 0) {
-            setCount(count - 1)
+    if (count > 0) {
+        setCount(count - 1)
         } else {
-            alert("Stokta Yok!")
-            setCount(0)
+        alert("Stokta Yok!")
+        setCount(0)
         }
     }
-    const [img, setImg] = useState(product.img)
-    const colorSwatch = (i) => {
-        let data = product.color.find(item => item.color === i)
-        setImg(data.img)
+
+    // Add to cart
+    const addToCart = async (id) => {
+        dispatch(addToCart(id))
     }
+
+    // Add to Favorite
+    const addToFav = async (id) => {
+        dispatch(addToFav(id))
+    }
+
+ 
+    
 
     let settings = {
         arrows: true,
@@ -64,24 +72,26 @@ const ProductDetailsTwo = () => {
         ]
     };
     return (
-        <>{product
-            ?
-            <section id="product_single_two" className="ptb-100">
+        <>
+        {status !== 'succeeded' ? (
+                <div>Loading...</div>
+            ) :
+            (product && <section id="product_single_two" className="ptb-100">
                 <div className="container">
                     <div className="row area_boxed">
                         <div className="col-lg-4">
                             <div className="product_single_two_img slider-for">
                                 <Slider {...settings}>
                                     <div className="product_img_two_slider">
-                                        <img src={img} alt="img" />
+                                        <img src="https://placehold.co/300x440" alt="img" />
                                     </div>
                                     <div className="product_img_two_slider">
-                                        <img src={product.hover_img} alt="img" />
+                                        <img src="https://placehold.co/300x440" alt="img" />
                                     </div>
                                     {
-                                        product.color.map(item => (
+                                        product.color && product.color.map(item => (
                                             <div className="product_img_two_slider">
-                                                <img src={item.img} alt="img" />
+                                                <img src="https://placehold.co/300x440" alt="img" />
                                             </div>
                                         ))
                                     }
@@ -92,12 +102,12 @@ const ProductDetailsTwo = () => {
                         <div className="col-lg-8">
                             <div className="product_details_right_one">
                                 <div className="modal_product_content_one">
-                                    <h3>{product.title}</h3>
-                                    <div className="reviews_rating">
+                                    <h3>{product.name}</h3>
+                                    {product.rating && <div className="reviews_rating">
                                         <RatingStar maxScore={5} rating={product.rating.rate} id="rating-star-common-2" />
                                         <span>({product.rating.count} Müşteri Yorumları)</span>
-                                    </div>
-                                    <h4>{product.price}.00 TL <del>{parseInt(product.price) + 17}.00 TL</del> </h4>
+                                    </div>}
+                                    <h4>{product.price} TL <del>{parseInt(product.price) + 17} TL</del> </h4>
                                     <p>{product.description}</p>
                                     <div className="customs_selects">
                                         <select name="product" className="customs_sel_box">
@@ -107,26 +117,6 @@ const ProductDetailsTwo = () => {
                                             <option value="learz">L</option>
                                             <option value="xl">XL</option>
                                         </select>
-                                    </div>
-                                    <div className="variable-single-item">
-                                        <span>Renk</span>
-                                        <div className="product-variable-color">
-                                            <label htmlFor="modal-product-color-red1">
-                                                <input name="modal-product-color" id="modal-product-color-red1"
-                                                    className="color-select" type="radio" onChange={() => { colorSwatch('red') }} defaultChecked/>
-                                                <span className="product-color-red"></span>
-                                            </label>
-                                            <label htmlFor="modal-product-color-green3">
-                                                <input name="modal-product-color" id="modal-product-color-green3"
-                                                    className="color-select" type="radio" onChange={() => { colorSwatch('green') }} />
-                                                <span className="product-color-green"></span>
-                                            </label>
-                                            <label htmlFor="modal-product-color-blue5">
-                                                <input name="modal-product-color" id="modal-product-color-blue5"
-                                                    className="color-select" type="radio" onChange={() => { colorSwatch('blue') }} />
-                                                <span className="product-color-blue"></span>
-                                            </label>
-                                        </div>
                                     </div>
                                     <form id="product_count_form_two">
                                         <div className="product_count_one">
@@ -148,13 +138,13 @@ const ProductDetailsTwo = () => {
                                     <div className="links_Product_areas">
                                         <ul>
                                             <li>
-                                                <a href="#!" className="action wishlist" title="Wishlist" onClick={() => addToFav(product.id)}><i
+                                                <a href="#!" className="action wishlist" title="Wishlist" onClick={() => addToFav(product.productId)}><i
                                                     className="fa fa-heart"></i>Favorilere Ekle</a>
                                             </li>
                                          
                                         </ul>
                                         <a href="#!" className="theme-btn-one btn-black-overlay btn_sm"
-                                         onClick={() => addToCart(product.id)}>Sepete Ekle</a>
+                                         onClick={() => addToCart(product.productId)}>Sepete Ekle</a>
                                     </div>
 
                                 </div>
@@ -164,19 +154,7 @@ const ProductDetailsTwo = () => {
                     <ProductInfo />
                 </div>
             </section>
-            :
-            <div className="container ptb-100">
-                <div className="row">
-                    <div className="col-lg-6 offset-lg-3 col-md-6 offset-md-3 col-sm-12 col-12">
-                        <div className="empaty_cart_area">
-                            <img src={img} alt="img" />
-                            <h2>Ürün Bulunamadı</h2>
-                            <Link to="/shop" className="btn btn-black-overlay btn_sm">Alışverişe Devam</Link>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
+            )}
             <RelatedProduct />
         </>
     )

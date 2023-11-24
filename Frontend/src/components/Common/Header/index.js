@@ -9,19 +9,21 @@ import svg from '../../../assets/img/svg/cancel.svg'
 import logoWhite from '../../../assets/img/logo-white.png'
 import svgsearch from '../../../assets/img/svg/search.svg'
 import Swal from 'sweetalert2'
+import { removeCartItemAsync } from '../../../app/slices/product';
 const Header = () => {
     let carts = useSelector((state) => state.products.carts);
     let favorites = useSelector((state) => state.products.favorites);
+    let {user, status} = useSelector((state) => state.user);
     const [click, setClick] = useState(false);
     const history = useNavigate();
     let dispatch = useDispatch();
 
-    const rmCartProduct = (id) => {
-        dispatch({ type: "products/removeCart", payload: { id } });
+    const rmCartProduct = (detailsId) => {
+        dispatch(removeCartItemAsync({ detailsId: detailsId, token: user.token }));
     }
 
     const rmFavProduct = (id) => {
-        dispatch({ type: "products/removeToFav", payload: { id } });
+        dispatch({ type: "products/removeToFavItem", payload: { id } });
     }
 
     const cartTotal = () => {
@@ -112,7 +114,7 @@ const Header = () => {
                                             }
                                         </li>
                                         <li>
-                                            {carts.length
+                                            {carts.length 
                                                 ? <a href="#!" className="offcanvas-toggle"
                                                     onClick={handleClick}>
                                                     <i className="fa fa-shopping-bag"></i>
@@ -303,7 +305,7 @@ const Header = () => {
                                     </Link>
                                     <div className="offcanvas-wishlist-item-content">
                                         <Link to={`/product-details-two/${data.id}`}
-                                            className="offcanvas-wishlist-item-link">{data.title}</Link>
+                                            className="offcanvas-wishlist-item-link">{data.name}</Link>
                                         <div className="offcanvas-wishlist-item-details">
                                             <span className="offcanvas-wishlist-item-details-quantity">
                                                 {data.quantity || 1} x
@@ -315,7 +317,7 @@ const Header = () => {
                                 </div>
                                 <div className="offcanvas-wishlist-item-delete text-right">
                                     <a href="#!" className="offcanvas-wishlist-item-delete"
-                                        onClick={() => rmCartProduct(data.id)}>
+                                        onClick={() => rmCartProduct(data.detailsId)}>
                                         <i className="fa fa-trash"></i></a>
                                 </div>
                             </li>
@@ -323,7 +325,7 @@ const Header = () => {
                     </ul>
                     <div className="offcanvas-cart-total-price">
                         <span className="offcanvas-cart-total-price-text">Toplam :</span>
-                        <span className="offcanvas-cart-total-price-value">{cartTotal()}.00 TL</span>
+                        <span className="offcanvas-cart-total-price-value">{cartTotal()} TL</span>
                     </div>
                     <ul className="offcanvas-cart-action-button">
                         <li>
@@ -347,7 +349,6 @@ const Header = () => {
                 </div>
                 <div className="offcanvas-wishlist-wrapper">
                     <h4 className="offcanvas-title">Favoriler</h4>
-
                     <ul className="offcanvas-wishlist">
                         {favorites.map((data, index) => (
                             <li className="offcanvas-wishlist-item-single" key={index}>
@@ -359,7 +360,7 @@ const Header = () => {
                                     </Link>
                                     <div className="offcanvas-wishlist-item-content">
                                         <Link to={`/product-details-one/${data.id}`}
-                                            className="offcanvas-wishlist-item-link">{data.title}</Link>
+                                            className="offcanvas-wishlist-item-link">{data.name}</Link>
                                         <div className="offcanvas-wishlist-item-details">
                                             <span className="offcanvas-wishlist-item-details-quantity">1 x
                                             </span>

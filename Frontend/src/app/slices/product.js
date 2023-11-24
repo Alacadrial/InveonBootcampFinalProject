@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import Swal from "sweetalert2";
-import { PRODUCT_URL, CART_GET_URL } from "../../urls/apiUrls";
+import { PRODUCT_URL, CART_GET_URL, CART_REMOVE_ITEM_URL } from "../../urls/apiUrls";
 import axios from "axios";
 
 
@@ -48,7 +48,7 @@ const productsSlice = createSlice({
                 }
             })
         },
-        removeCart: (state, action) => {
+        removeCartItem: (state, action) => {
             let { id } = action.payload;
             let sepetinOnSonHali = state.carts.filter(item => item.productId !== parseInt(id))
             state.carts = sepetinOnSonHali
@@ -134,6 +134,7 @@ const productsSlice = createSlice({
                     categoryName: itemDetails.product.categoryName,
                     imageUrl: itemDetails.product.imageUrl,
                     quantity: itemDetails.count,
+                    detailsId: itemDetails.cartDetailsId
                   };
                 });
               } else if (action.type.endsWith('/rejected')) {
@@ -142,6 +143,15 @@ const productsSlice = createSlice({
               }
             }
           )
+          .addMatcher(
+            (action) => action.type.startsWith('products/removeCartItemAsync'),
+            (state, action) => {
+              if (action.type.endsWith('/fulfilled')) {
+                let detailsId = action.payload;
+                let afterRemoval = state.carts.filter(item => item.detailsId !== parseInt(detailsId))
+                state.carts = afterRemoval
+              }
+            })
           // We can also listen to another slice's action as such, this may come in handy later
           .addMatcher(
             (action) => action.type.startsWith('user/loginAsync'),
@@ -153,6 +163,28 @@ const productsSlice = createSlice({
       },
 })
 
+export const removeCartItemAsync = createAsyncThunk(
+  'products/removeCartItemAsync',
+  async (payload) => {
+    try {
+      let {detailsId, token} = payload;
+      const url = `${CART_REMOVE_ITEM_URL}`;
+      const response = await axios.post(
+        url,
+        { cartDetailsId: detailsId }, 
+        {
+          headers: {
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}`
+          },
+        }
+      );
+      return detailsId;
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  }
+);
 export const getProductsAsync = createAsyncThunk(
   'products/getProductsAsync',
   async () => {
@@ -163,7 +195,6 @@ export const getProductsAsync = createAsyncThunk(
       return data;
     } catch (error) {
       console.error('Error fetching data:', error);
-      throw error;
     }
   }
 );
@@ -179,7 +210,6 @@ export const getProductByIdAsync = createAsyncThunk(
       } catch (error) {
         // Handle errors here
         console.error('Error fetching data:', error);
-        throw error;
       }
     }
 );
@@ -196,11 +226,10 @@ export const getCartByUserId = createAsyncThunk(
       } catch (error) {
         // Handle errors here
         console.error('Error fetching data:', error);
-        throw error;
       }
     }
 );
 
-export const { AddToCart, updateProducts, updateCart, removeCart, clearCart, addToFavorites, removeToFav, clearFav } = productsSlice.actions;
+export const { AddToCart, updateProducts, updateCart, clearCart, addToFavorites, removeToFav, clearFav } = productsSlice.actions;
 const productsReducer = productsSlice.reducer
 export default productsReducer

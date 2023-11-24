@@ -19,17 +19,17 @@ const TotalCart = (props) => {
                         <div className="coupon_inner">
                             <div className="cart_subtotal">
                                 <p>Alt Toplam : </p>
-                                <p className="cart_amount">${cartTotal()}.00</p>
+                                <p className="cart_amount">${cartTotal()}</p>
                             </div>
                             <div className="cart_subtotal ">
                                 <p>Kargo</p>
-                                <p className="cart_amount"><span>Sabit Fiyat</span> 00 TL</p>
+                                <p className="cart_amount"><span>Sabit Fiyat</span> TL</p>
                             </div>
                             <a href="#!">Kargo Hesapla</a>
 
                             <div className="cart_subtotal">
                                 <p>Toplam</p>
-                                <p className="cart_amount">${cartTotal()}.00</p>
+                                <p className="cart_amount">${cartTotal()}</p>
                             </div>
                             <div className="checkout_btn">
 
@@ -47,17 +47,17 @@ const TotalCart = (props) => {
                         <div className="coupon_inner">
                             <div className="cart_subtotal">
                                 <p>Alt Toplam : </p>
-                                <p className="cart_amount">{cartTotal()}.00 TL</p>
+                                <p className="cart_amount">{cartTotal()} TL</p>
                             </div>
                             <div className="cart_subtotal ">
                                 <p>Kargo</p>
-                                <p className="cart_amount"><span>Sabit Fiyat</span> 00 TL</p>
+                                <p className="cart_amount"><span>Sabit Fiyat</span> TL</p>
                             </div>
                             <a href="#!">Kargo Hesapla</a>
 
                             <div className="cart_subtotal">
                                 <p>Toplam</p>
-                                <p className="cart_amount">{cartTotal()}.00 TL</p>
+                                <p className="cart_amount">{cartTotal()} TL</p>
                             </div>
                             <div className="checkout_btn">
 

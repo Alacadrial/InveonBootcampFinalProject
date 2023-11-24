@@ -142,11 +142,11 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
             {
                 CartDetails cartDetails = await _db.CartDetails
                     .FirstOrDefaultAsync(u => u.CartDetailsId == cartDetailsId);
-
+                _db.CartDetails.Remove(cartDetails);
+                /*
+                // This is used to remove cart entirely if it is empty, not needed so commenting out.                 
                 int totalCountOfCartItems = _db.CartDetails
                     .Where(u => u.CartHeaderId == cartDetails.CartHeaderId).Count();
-
-                _db.CartDetails.Remove(cartDetails);
                 if (totalCountOfCartItems == 1)
                 {
                     var cartHeaderToRemove = await _db.CartHeaders
@@ -154,6 +154,7 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
 
                     _db.CartHeaders.Remove(cartHeaderToRemove);
                 }
+                */
                 await _db.SaveChangesAsync();
                 return true;
             }

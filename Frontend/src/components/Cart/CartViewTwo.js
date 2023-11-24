@@ -4,14 +4,18 @@ import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from "react-redux";
 import img from '../../assets/img/common/empty-cart.png'
 import Swal from 'sweetalert2';
+import { removeCartItemAsync } from '../../app/slices/product';
 
 const CartViewTwo = () => {
 
     let dispatch = useDispatch();
     let carts = useSelector((state) => state.products.carts);
+    let {user, status} = useSelector((state) => state.user);
+    
+    
     // Remove Product
-    const rmProduct = (id) => {
-        dispatch({ type: "products/removeCart", payload: { id } });
+    const rmProduct = (detailsId) => {
+        dispatch(removeCartItemAsync({ detailsId: detailsId, token: user.token }));
     }
     // Clear Cart
     const clearCarts = () => {
@@ -23,7 +27,7 @@ const CartViewTwo = () => {
     }
     return (
         <>
-            {carts.length
+            {carts.length && status
                 ?
                 <section id="cart_area_two" className="ptb-100">
                     <div className="container">
@@ -51,7 +55,7 @@ const CartViewTwo = () => {
                                                             </Link>
                                                         </td>
                                                         <td className="product_name">
-                                                            <Link to={`/product-details-one/${data.id}`}> {data.title}</Link>
+                                                            <Link to={`/product-details-one/${data.id}`}> {data.name}</Link>
                                                         </td>
                                                         <td className="product-price">${data.price}.00</td>
                                                         <td className="product_quantity">
@@ -70,7 +74,7 @@ const CartViewTwo = () => {
                                                             </div>
                                                         </td>
                                                         <td className="product_total">${data.price * (data.quantity || 1)}.00</td>
-                                                        <td className="product_remove"><a href="#!" onClick={() => rmProduct(data.id)} style={{ 'cursor': 'pointer' }}><i className="fa fa-trash text-danger"></i></a></td>
+                                                        <td className="product_remove"><a href="#!" onClick={() => rmProduct(data.detailsId)} style={{ 'cursor': 'pointer' }}><i className="fa fa-trash text-danger"></i></a></td>
                                                     </tr>
                                                 ))}
 

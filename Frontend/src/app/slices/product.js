@@ -1,7 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import Swal from "sweetalert2";
-import { PRODUCT_URL, CART_GET_URL, CART_REMOVE_ITEM_URL } from "../../urls/apiUrls";
+import { PRODUCT_URL, CART_GET_URL, CART_REMOVE_ITEM_URL, CART_URL } from "../../urls/apiUrls";
 import axios from "axios";
+import { createUpdatePayloadMap } from "../../utils/utils";
 
 
 const productsSlice = createSlice({
@@ -152,6 +153,26 @@ const productsSlice = createSlice({
                 state.carts = afterRemoval
               }
             })
+          .addMatcher(
+            (action) => action.type.startsWith('products/updateCartAsync'),
+            (state, action) => {
+              if (action.type.endsWith('/fulfilled')) {
+                if(action.payload){
+                  state.carts = action.payload.cartDetails.map((itemDetails) => {
+                    return {
+                      productId: itemDetails.product.productId,
+                      name: itemDetails.product.name,
+                      price: itemDetails.product.price,
+                      description: itemDetails.product.description,
+                      categoryName: itemDetails.product.categoryName,
+                      imageUrl: itemDetails.product.imageUrl,
+                      quantity: itemDetails.count,
+                      detailsId: itemDetails.cartDetailsId
+                    };
+                  });
+                }
+              }
+            })
           // We can also listen to another slice's action as such, this may come in handy later
           .addMatcher(
             (action) => action.type.startsWith('user/loginAsync'),
@@ -163,15 +184,42 @@ const productsSlice = createSlice({
       },
 })
 
+export const updateCartAsync = createAsyncThunk(
+  'products/updateCartAsync',
+  async (payload) => {
+    console.log("payload: ", payload)
+    try {
+      let {cart, product, quantity, userId, token} = payload;
+      const url = `${CART_URL}`;
+      let requestPayload = createUpdatePayloadMap(cart, product, quantity, userId);
+      const response = await axios.post(
+        url,
+        requestPayload, 
+        {
+          headers: {
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}`
+          },
+        }
+      );
+      console.log(response)
+      return response.data.result;
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  }
+);
+
 export const removeCartItemAsync = createAsyncThunk(
   'products/removeCartItemAsync',
   async (payload) => {
     try {
+      console.log("Thunk payload: ", payload)
       let {detailsId, token} = payload;
       const url = `${CART_REMOVE_ITEM_URL}`;
       const response = await axios.post(
         url,
-        { cartDetailsId: detailsId }, 
+        detailsId, 
         {
           headers: {
             'Content-Type': 'application/json', 

@@ -298,13 +298,13 @@ const Header = () => {
                         {carts.map((data, index) => (
                             <li className="offcanvas-wishlist-item-single" key={index}>
                                 <div className="offcanvas-wishlist-item-block">
-                                    <Link to={`/product-details-two/${data.id}`}
+                                    <Link to={`/product-details-two/${data.productId}`}
                                         className="offcanvas-wishlist-item-image-link" >
                                         <img src={data.img} alt="img"
                                             className="offcanvas-wishlist-image" />
                                     </Link>
                                     <div className="offcanvas-wishlist-item-content">
-                                        <Link to={`/product-details-two/${data.id}`}
+                                        <Link to={`/product-details-two/${data.productId}`}
                                             className="offcanvas-wishlist-item-link">{data.name}</Link>
                                         <div className="offcanvas-wishlist-item-details">
                                             <span className="offcanvas-wishlist-item-details-quantity">

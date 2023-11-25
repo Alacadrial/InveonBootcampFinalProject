@@ -57,7 +57,6 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
                 foreach (var item in cart.CartDetails.ToList())
                 {
                     item.CartHeaderId = cart.CartHeader.CartHeaderId;
-                    item.Product = null;
                     _db.CartDetails.Add(item);
                 }                
                 await _db.SaveChangesAsync();
@@ -69,8 +68,15 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
                 var itemsToRemove = _db.CartDetails.Where(dbItem => !itemIds.Contains(dbItem.ProductId)).ToList();
 
                 // Again changed to make it work with list of products.
-                foreach (var item in cart.CartDetails.ToList())
+                foreach (var item in cart.CartDetails)
                 {
+                    // ... each microservice has its own DB and its own Context, if it does exist in our database it would cause problem as is.
+                    var prodInDb = await _db.Products.AsNoTracking().FirstOrDefaultAsync(u => u.ProductId == item.ProductId);
+                    if (prodInDb != null)
+                    {
+                        // need to make it null otherwise tries to create a new entity on products table in CartDatabase.
+                        item.Product = null;
+                    }
                     //check if details has same product
                     var cartDetailsFromDb = await _db.CartDetails.AsNoTracking().FirstOrDefaultAsync(
                     u => u.ProductId == item.ProductId &&
@@ -79,17 +85,17 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
                     {
                         //create details
                         item.CartHeaderId = cartHeaderFromDb.CartHeaderId;
-                        item.Product = null;
                         _db.CartDetails.Add(item);
                     }
                     else
                     {
+                        
                         //update the count / cart details
-                        item.Product = null;
                         item.CartDetailsId = cartDetailsFromDb.CartDetailsId;
                         item.CartHeaderId = cartDetailsFromDb.CartHeaderId;
                         _db.CartDetails.Update(item);
                     }
+
                 }
                 foreach(var item in itemsToRemove)
                 {
@@ -97,7 +103,14 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
                 }
                 await _db.SaveChangesAsync();
             }
-            return _mapper.Map<CartDto>(cart);
+            // Filling virtual property so I can see product information on response.
+            var retVal = _mapper.Map<CartDto>(cart);
+            foreach (var item in retVal.CartDetails)
+            {
+                var product = await _db.Products.AsNoTracking().FirstAsync(u => u.ProductId == item.ProductId);
+                item.Product = _mapper.Map<ProductDto>(product);
+            }
+            return retVal;
         }
 
         public async Task<CartDto> GetCartByUserId(string userId)

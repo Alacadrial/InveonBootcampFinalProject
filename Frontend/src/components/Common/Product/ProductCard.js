@@ -1,16 +1,18 @@
 import React, {useState} from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {Link} from "react-router-dom";
 import {AiOutlineHeart} from 'react-icons/ai';
-import { AddToCart, addToFavorites } from "../../../app/slices/product";
+import { AddToCart, addToFavorites, updateCartAsync } from "../../../app/slices/product";
 
 //Her bir ürünü temsil edecek
 const ProductCard = (props) => {
         let dispatch=  useDispatch();
+        let {user, status} = useSelector(state => state.user);
+        let cart = useSelector(state => state.products.carts);
 
-        const sepeteEkle = async(id) => {
-            console.log("tıklandı" , id);
-            dispatch(AddToCart(id))
+        const sepeteEkle = async(product) => {
+            console.log("tıklandı" , product.productId);
+            dispatch(updateCartAsync({cart: cart, product: product, quantity: 1, userId: user.userId, token: user.token}))
         }
         
         const favorilereEkle = async(id) => {
@@ -37,7 +39,7 @@ const ProductCard = (props) => {
                      </a>
                  </div>
                  <button type="button" className="add-to-cart offcanvas-toggle" 
-                    onClick={() => sepeteEkle(props.data.productId)} >Sepete Ekle</button>
+                    onClick={() => sepeteEkle(props.data)} >Sepete Ekle</button>
              </div>
              <div className="content">
                 <h5 className="title">

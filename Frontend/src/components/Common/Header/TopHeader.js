@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import avater from '../../../assets/img/common/avater.png'
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom"
 import Swal from 'sweetalert2';
+import { logout } from '../../../app/slices/user';
 
 const TopHeader = () => {
     let dispatch = useDispatch();
@@ -11,12 +12,16 @@ const TopHeader = () => {
 
     let status = useSelector((state) => state.user.status);
     let user = useSelector((state) => state.user.user);
+    const [logoutPressed, setLogoutPressed] = useState(false);
+
+    useEffect(() => {
+        if(logoutPressed)
+            history("/");
+    }, [status]);
 
     const cikisYap = () => {
-
-        console.log("logouta tiklandi");
-        dispatch({ type: "user/logout" })
-        history("/");
+        setLogoutPressed(true);
+        dispatch(logout())
     }
     return (
         <>

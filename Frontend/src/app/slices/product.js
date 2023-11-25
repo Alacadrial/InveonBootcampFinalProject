@@ -173,12 +173,12 @@ const productsSlice = createSlice({
                 }
               }
             })
-          // We can also listen to another slice's action as such, this may come in handy later
+          // We can also listen to another slice's action as such, clearing cart after user logs out.
           .addMatcher(
-            (action) => action.type.startsWith('user/loginAsync'),
+            (action) => action.type.startsWith('user/logout'),
             (state, action) => {
               if (action.type.endsWith('/fulfilled')) {
-                console.log("Listening user login inside productSlice, userLogInSuccess");
+                state.carts = [];
               }
             });
       },

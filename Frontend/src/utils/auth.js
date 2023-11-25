@@ -28,8 +28,9 @@ export const authenticateUser = async (username, password) => {
   };
 
 export const revokeToken = async (accessToken) => {
+    console.log("Revoke called, token: ", accessToken)
     try {
-      await axios.post(REVOKE_URL, 
+      let response = await axios.post(REVOKE_URL, 
         new URLSearchParams({
           token_type_hint: 'access_token',
           token: accessToken,
@@ -41,9 +42,9 @@ export const revokeToken = async (accessToken) => {
           },
         }
       );
+      console.log("Revoke response: ", response)
     } catch (error) {
       // Handle deauth error
       console.error('Logout error:', error);
-      throw error;
     }
   };

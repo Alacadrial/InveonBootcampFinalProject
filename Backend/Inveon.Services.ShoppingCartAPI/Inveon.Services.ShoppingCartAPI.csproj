@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Inveon.MessageBus\Inveon.MessageBus.csproj" />
+	  <ProjectReference Include="..\Inveon.Services.ProductAPI\Inveon.Services.ProductAPI.csproj" />
   </ItemGroup>
 
 </Project>

@@ -7,12 +7,9 @@ import { AddToCart, addToFavorites, updateCartAsync } from "../../../app/slices/
 //Her bir ürünü temsil edecek
 const ProductCard = (props) => {
         let dispatch=  useDispatch();
-        let {user, status} = useSelector(state => state.user);
-        let cart = useSelector(state => state.products.carts);
 
         const sepeteEkle = async(product) => {
-            console.log("tıklandı" , product.productId);
-            dispatch(updateCartAsync({cart: cart, product: product, quantity: 1, userId: user.userId, token: user.token}))
+            dispatch(updateCartAsync({product: product, quantity: 1}))
         }
         
         const favorilereEkle = async(id) => {

@@ -186,19 +186,20 @@ const productsSlice = createSlice({
 
 export const updateCartAsync = createAsyncThunk(
   'products/updateCartAsync',
-  async (payload) => {
-    console.log("payload: ", payload)
+  async (payload, {getState}) => {
     try {
-      let {cart, product, quantity, userId, token} = payload;
+      const currentCarts = getState().products.carts;
+      const user = getState().user.user;
+      let {product, quantity} = payload;
       const url = `${CART_URL}`;
-      let requestPayload = createUpdatePayloadMap(cart, product, quantity, userId);
+      let requestPayload = createUpdatePayloadMap(currentCarts, product, quantity, user.userId);
       const response = await axios.post(
         url,
         requestPayload, 
         {
           headers: {
             'Content-Type': 'application/json', 
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${user.token}`
           },
         }
       );

@@ -4,6 +4,7 @@ using Inveon.Services.ShoppingCartAPI.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Inveon.Services.ShoppingCartAPI.Controllers
 {
@@ -133,7 +134,24 @@ namespace Inveon.Services.ShoppingCartAPI.Controllers
             return _response;
         }
 
-
+        [HttpDelete]
+        [Authorize]
+        public async Task<object> ClearUserCart()
+        {
+            // We don't need to pass any payload we can get the userId as such, since we are using [Authorize] property, only authenticated users can reach here
+            // meaning we can get user details from System.Security.Claims and we are sure that it is not null.
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+                await _cartRepository.ClearCart(userId);
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
+            return _response;
+        }
 
 
         [HttpPost("Checkout2")]

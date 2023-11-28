@@ -56,6 +56,11 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
                 await _db.SaveChangesAsync();
                 foreach (var item in cart.CartDetails.ToList())
                 {
+                    var prodInDb = await _db.Products.AsNoTracking().FirstOrDefaultAsync(u => u.ProductId == item.ProductId);
+                    if (prodInDb != null)
+                    {
+                        item.Product = null;
+                    }
                     item.CartHeaderId = cart.CartHeader.CartHeaderId;
                     _db.CartDetails.Add(item);
                 }                
@@ -115,9 +120,15 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
 
         public async Task<CartDto> GetCartByUserId(string userId)
         {
+            var cartHeaderFromDb = await _db.CartHeaders.FirstOrDefaultAsync(u => u.UserId == userId);
+
+            // if header is null return dummy empty cart
+            if (cartHeaderFromDb == null)
+                return new CartDto { CartHeader = new CartHeaderDto(), CartDetails = new List<CartDetailsDto>() };
+            
             Cart cart = new()
             {
-                CartHeader = await _db.CartHeaders.FirstOrDefaultAsync(u => u.UserId == userId)
+                CartHeader = cartHeaderFromDb
             };
 
             cart.CartDetails = _db.CartDetails

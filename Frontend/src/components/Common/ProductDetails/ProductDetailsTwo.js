@@ -7,7 +7,7 @@ import Slider from "react-slick";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from 'react-router-dom';
 import { RatingStar } from "rating-star";
-import { getProductByIdAsync } from '../../../app/slices/product';
+import { getProductByIdAsync, updateCartAsync } from '../../../app/slices/product';
 
 const ProductDetailsTwo = () => {
     let { id } = useParams();
@@ -41,8 +41,8 @@ const ProductDetailsTwo = () => {
     }
 
     // Add to cart
-    const addToCart = async (id) => {
-        dispatch(addToCart(id))
+    const addToCart = async (product) => {
+        dispatch(updateCartAsync({product: product, quantity: count}))
     }
 
     // Add to Favorite
@@ -144,7 +144,7 @@ const ProductDetailsTwo = () => {
                                          
                                         </ul>
                                         <a href="#!" className="theme-btn-one btn-black-overlay btn_sm"
-                                         onClick={() => addToCart(product.productId)}>Sepete Ekle</a>
+                                         onClick={() => addToCart(product)}>Sepete Ekle</a>
                                     </div>
 
                                 </div>

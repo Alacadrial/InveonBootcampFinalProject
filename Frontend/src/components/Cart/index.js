@@ -4,21 +4,22 @@ import TotalCart from './TotalCart'
 import { Link } from 'react-router-dom'
 import img from '../../assets/img/common/empty-cart.png'
 import { useDispatch, useSelector } from "react-redux";
+import { clearCartAsync, removeCartItemAsync, updateCartAsync } from "../../app/slices/product";
 
 const CartArea = () => {
     let dispatch = useDispatch();
     let carts = useSelector((state) => state.products.carts);
     // Remove from Cart
-    const rmProduct = (id) => {
-        dispatch({ type: "products/removeCart", payload: { id } });
+    const rmProduct = (detailsId) => {
+        dispatch(removeCartItemAsync(detailsId));
     }
     // Clear
     const clearCarts = () => {
-        dispatch({ type: "products/clearCart" });
+        dispatch(clearCartAsync());
     }
     // Value Update
-    const cartValUpdate = (val, id) => {
-        dispatch({ type: "products/updateCart", payload: { val, id } });
+    const cartValUpdate = (product, quantity) => {
+        dispatch(updateCartAsync({product: product, quantity:quantity}));
     }
 
     return (
@@ -46,21 +47,21 @@ const CartArea = () => {
                                                 {carts.map((data, index) => (
                                                     <tr key={index}>
                                                         <td className="product_remove">
-                                                            <i className="fa fa-trash text-danger" onClick={() => rmProduct(data.id)} style={{ 'cursor': 'pointer' }}></i>
+                                                            <i className="fa fa-trash text-danger" onClick={() => rmProduct(data.detailsId)} style={{ 'cursor': 'pointer' }}></i>
                                                         </td>
                                                         <td className="product_thumb">
-                                                            <Link to={`/product-details-one/${data.id}`}>
-                                                                <img src={data.img} alt="img" />
+                                                            <Link to={`/product-details-two/${data.productId}`}>
+                                                                <img src={data.imageUrl} alt="img" />
                                                             </Link>
                                                         </td>
                                                         <td className="product_name">
-                                                            <Link to={`/product-details-one/${data.id}`}>
-                                                                {data.title}
+                                                            <Link to={`/product-details-two/${data.productId}`}>
+                                                                {data.name}
                                                             </Link>
                                                         </td>
                                                         <td className="product-price">{data.price} TL</td>
                                                         <td className="product_quantity">
-                                                            <input min="1" max="100" type="number" onChange={e => cartValUpdate(e.currentTarget.value, data.id)} defaultValue={data.quantity || 1} />
+                                                            <input min="1" max="100" type="number" onChange={e => cartValUpdate(data, e.currentTarget.value)} defaultValue={data.quantity || 1} />
                                                         </td>
                                                         <td className="product_total">{data.price * (data.quantity || 1)} TL</td>
                                                     </tr>

@@ -12,35 +12,29 @@ export const decodeJwt = (token) => {
 
 
 export const createUpdatePayloadMap = (cart, product, quantity, userId) => {
-  let productToChange = cart.find(item => item.productId == product.productId);
-  let desiredArr = [];
-  if(productToChange)
-  {
-    productToChange.quantity = quantity
-    desiredArr = cart
-  }
-  else
-  {
-    desiredArr = [...cart, product];
-  }
-  let payload = {
-    "cartHeader" : {
-      "cartHeaderId":0,
-      "couponCode": null,
-      "userId": userId
-  },
-  "cartDetails" : desiredArr.map(item => {
-    const { quantity, detailsId, ...formatted } = item;
-    return {
+  // Check if the product is already in the cart
+  const isProductInCart = cart.some(item => item.productId === product.productId);
+
+  // If the product is in the cart, update the quantity; otherwise, append the product
+  const updatedCart = isProductInCart
+    ? cart.map(item => (item.productId === product.productId ? { ...item, quantity } : item))
+    : [...cart, { ...product, quantity }];
+
+  const payload = {
+    cartHeader: {
+      cartHeaderId: 0,
+      couponCode: null,
+      userId: userId
+    },
+    cartDetails: updatedCart.map(({ quantity, detailsId, ...formatted }) => ({
       cartHeaderId: 0,
       cartDetailsId: 0,
       count: quantity,
-      productId: item.productId,
+      productId: formatted.productId,
       product: formatted
-    }
-  })
+    }))
   };
 
   console.log("Payload that will be sent for createUpdate: ", payload);
-  return payload; 
-}
+  return payload;
+};

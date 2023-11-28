@@ -133,7 +133,7 @@ const productsSlice = createSlice({
                     price: itemDetails.product.price,
                     description: itemDetails.product.description,
                     categoryName: itemDetails.product.categoryName,
-                    imageUrl: itemDetails.product.imageUrl,
+                    imageUrl: `https://placehold.co/300x440/orange/white?text=${encodeURIComponent(itemDetails.product.name)}`, // itemDetails.product.imageUrl,
                     quantity: itemDetails.count,
                     detailsId: itemDetails.cartDetailsId
                   };
@@ -165,11 +165,20 @@ const productsSlice = createSlice({
                       price: itemDetails.product.price,
                       description: itemDetails.product.description,
                       categoryName: itemDetails.product.categoryName,
-                      imageUrl: itemDetails.product.imageUrl,
+                      imageUrl: `https://placehold.co/300x440/orange/white?text=${encodeURIComponent(itemDetails.product.name)}`,
                       quantity: itemDetails.count,
                       detailsId: itemDetails.cartDetailsId
                     };
                   });
+                }
+              }
+            })
+          .addMatcher(
+            (action) => action.type.startsWith('products/clearCartAsync'),
+            (state, action) => {
+              if (action.type.endsWith('/fulfilled')) {
+                if(action.payload){
+                  state.carts = [];
                 }
               }
             })
@@ -183,6 +192,29 @@ const productsSlice = createSlice({
             });
       },
 })
+
+export const clearCartAsync = createAsyncThunk(
+  'products/clearCartAsync',
+  async (payload, {getState}) => {
+    try {
+      const token = getState().user.user.token;
+      const url = `${CART_URL}`;
+      const response = await axios.delete(
+        url,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+        }
+      );
+      console.log(response)
+      return response.data.isSuccess;
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  }
+);
+
 
 export const updateCartAsync = createAsyncThunk(
   'products/updateCartAsync',
@@ -213,10 +245,9 @@ export const updateCartAsync = createAsyncThunk(
 
 export const removeCartItemAsync = createAsyncThunk(
   'products/removeCartItemAsync',
-  async (payload) => {
+  async (detailsId, {getState}) => {
     try {
-      console.log("Thunk payload: ", payload)
-      let {detailsId, token} = payload;
+      let token = getState().user.user.token;
       const url = `${CART_REMOVE_ITEM_URL}`;
       const response = await axios.post(
         url,

@@ -19,7 +19,7 @@ const Header = () => {
     let dispatch = useDispatch();
 
     const rmCartProduct = (detailsId) => {
-        dispatch(removeCartItemAsync({ detailsId: detailsId, token: user.token }));
+        dispatch(removeCartItemAsync(detailsId));
     }
 
     const rmFavProduct = (id) => {
@@ -300,7 +300,7 @@ const Header = () => {
                                 <div className="offcanvas-wishlist-item-block">
                                     <Link to={`/product-details-two/${data.productId}`}
                                         className="offcanvas-wishlist-item-image-link" >
-                                        <img src={data.img} alt="img"
+                                        <img src={data.imageUrl} alt="img"
                                             className="offcanvas-wishlist-image" />
                                     </Link>
                                     <div className="offcanvas-wishlist-item-content">
@@ -355,7 +355,7 @@ const Header = () => {
                                 <div className="offcanvas-wishlist-item-block">
                                     <Link to={`/product-details-one/${data.id}`}
                                         className="offcanvas-wishlist-item-image-link" >
-                                        <img src={data.img} alt="img"
+                                        <img src={data.imageUrl} alt="img"
                                             className="offcanvas-wishlist-image" />
                                     </Link>
                                     <div className="offcanvas-wishlist-item-content">

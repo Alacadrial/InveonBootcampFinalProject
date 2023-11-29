@@ -40,9 +40,9 @@ namespace Inveon.Services.FavouritesAPI.Repositories
             return retVal;
         }   
 
-        public async Task<bool> RemoveFavouriteForUser(string userId, int favouriteId)
+        public async Task<bool> RemoveFavouriteForUser(string userId, int productId)
         {
-            var favouriteInDb = await _db.Favourites.AsNoTracking().FirstOrDefaultAsync(entity => entity.UserId == userId && entity.FavouriteId == favouriteId);
+            var favouriteInDb = await _db.Favourites.AsNoTracking().FirstOrDefaultAsync(entity => entity.UserId == userId && entity.ProductId == productId);
             if (favouriteInDb == null)
             {
                 throw new Exception("The user does not have that item favourited so removing it resulted in error.");

@@ -58,12 +58,12 @@ namespace Inveon.Services.FavouritesAPI.Controllers
 
         [HttpDelete]
         [Authorize]
-        public async Task<object> RemoveFavourite([FromBody] int favouriteId)
+        public async Task<object> RemoveFavourite([FromBody] int productId)
         {
             try
             {
                 string userId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-                await _repository.RemoveFavouriteForUser(userId, favouriteId);
+                await _repository.RemoveFavouriteForUser(userId, productId);
             }
             catch (Exception ex)
             {

@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import Swal from 'sweetalert2';
 import { useNavigate } from "react-router-dom"
 import { loginAsync } from '../../app/slices/user';
-import { getCartByUserId } from '../../app/slices/product';
+import { getCartByUserId, getFavouritesAsync } from '../../app/slices/product';
 
 
 const LoginArea = () => {
@@ -17,6 +17,7 @@ const LoginArea = () => {
     useEffect(()=>{
         if(status){
             dispatch(getCartByUserId(user.userId));
+            dispatch(getFavouritesAsync());
             Swal.fire({
                 icon: 'success',
                 title: 'Giriş Başarılı',

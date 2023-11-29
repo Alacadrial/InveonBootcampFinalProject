@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import Swal from "sweetalert2";
-import { PRODUCT_URL, CART_GET_URL, CART_REMOVE_ITEM_URL, CART_URL } from "../../urls/apiUrls";
+import { PRODUCT_URL, CART_GET_URL, CART_REMOVE_ITEM_URL, CART_URL, FAVOURITES_URL } from "../../urls/apiUrls";
 import axios from "axios";
 import { createUpdatePayloadMap } from "../../utils/utils";
 
@@ -182,12 +182,47 @@ const productsSlice = createSlice({
                 }
               }
             })
+          .addMatcher(
+            (action) => action.type.startsWith('products/getFavouritesAsync'),
+            (state, action) => {
+              if (action.type.endsWith('/fulfilled')) {
+                let {isSuccess, result} = action.payload
+                if(isSuccess){
+                  state.favorites = result.map(favourite => {
+                    let {favouriteId, userId, ...product} = favourite.product;
+                    return product
+                  });
+                }
+              }
+            })
+            .addMatcher(
+              (action) => action.type.startsWith('products/addFavouriteAsync'),
+              (state, action) => {
+                if (action.type.endsWith('/fulfilled')) {
+                  console.log(action.payload)
+                  let {isSuccess, product} = action.payload
+                  if(isSuccess){
+                    state.favorites = [...state.favorites, product]
+                  }
+                }
+              })
+            .addMatcher(
+              (action) => action.type.startsWith('products/deleteFavouriteAsync'),
+              (state, action) => {
+                if (action.type.endsWith('/fulfilled')) {
+                  let {isSuccess, productId} = action.payload
+                  if(isSuccess){
+                    state.favorites = state.favorites.filter(product => product.productId !== productId);
+                  }
+                }
+              })
           // We can also listen to another slice's action as such, clearing cart after user logs out.
           .addMatcher(
             (action) => action.type.startsWith('user/logout'),
             (state, action) => {
               if (action.type.endsWith('/fulfilled')) {
                 state.carts = [];
+                state.favorites = [];
               }
             });
       },
@@ -309,6 +344,71 @@ export const getCartByUserId = createAsyncThunk(
       }
     }
 );
+
+
+
+/// Fav
+export const getFavouritesAsync = createAsyncThunk(
+  'products/getFavouritesAsync',
+  async (payload, {getState}) => {
+      const url = `${FAVOURITES_URL}`;
+      const {token} = getState().user.user;
+      const response = await axios.get(
+        url, 
+        {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+        }
+      );
+      return response.data;
+  }
+);
+
+export const addFavouriteAsync = createAsyncThunk(
+  'products/addFavouriteAsync',
+  async (product, {getState}) => {
+      const url = `${FAVOURITES_URL}`;
+      const {userId, token} = getState().user.user;
+      const response = await axios.post(
+        url,
+        {
+          favouriteId:0,
+          userId:userId,
+          productId:product.productId,
+          product:product
+        },
+        {
+            headers: {
+              'Content-Type': 'application/json', 
+              'Authorization': `Bearer ${token}`
+            },
+        }
+      );
+      return {isSuccess: response.data.isSuccess, product: product};
+  }
+);
+
+export const deleteFavouriteAsync = createAsyncThunk(
+  'products/deleteFavouriteAsync',
+  async (productId, {getState}) => {
+      const url = `${FAVOURITES_URL}`;
+      const {token} = getState().user.user;
+      console.log(token, productId)
+      const response = await axios.delete(
+        url,
+        {
+            headers: {
+              'Content-Type': 'application/json', 
+              'Authorization': `Bearer ${token}`
+            },
+            data: productId
+        }
+      );
+      return {isSuccess: response.data.isSuccess, productId: productId};
+  }
+);
+
 
 export const { AddToCart, updateProducts, updateCart, clearCart, addToFavorites, removeToFav, clearFav } = productsSlice.actions;
 const productsReducer = productsSlice.reducer

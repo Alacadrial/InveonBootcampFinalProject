@@ -9,7 +9,7 @@ import svg from '../../../assets/img/svg/cancel.svg'
 import logoWhite from '../../../assets/img/logo-white.png'
 import svgsearch from '../../../assets/img/svg/search.svg'
 import Swal from 'sweetalert2'
-import { removeCartItemAsync } from '../../../app/slices/product';
+import { deleteFavouriteAsync, removeCartItemAsync } from '../../../app/slices/product';
 const Header = () => {
     let carts = useSelector((state) => state.products.carts);
     let favorites = useSelector((state) => state.products.favorites);
@@ -22,8 +22,8 @@ const Header = () => {
         dispatch(removeCartItemAsync(detailsId));
     }
 
-    const rmFavProduct = (id) => {
-        dispatch({ type: "products/removeToFavItem", payload: { id } });
+    const rmFavProduct = (productId) => {
+        dispatch(deleteFavouriteAsync(productId));
     }
 
     const cartTotal = () => {
@@ -353,34 +353,26 @@ const Header = () => {
                         {favorites.map((data, index) => (
                             <li className="offcanvas-wishlist-item-single" key={index}>
                                 <div className="offcanvas-wishlist-item-block">
-                                    <Link to={`/product-details-one/${data.id}`}
+                                    <Link to={`/product-details-two/${data.productId}`}
                                         className="offcanvas-wishlist-item-image-link" >
                                         <img src={data.imageUrl} alt="img"
                                             className="offcanvas-wishlist-image" />
                                     </Link>
                                     <div className="offcanvas-wishlist-item-content">
-                                        <Link to={`/product-details-one/${data.id}`}
+                                        <Link to={`/product-details-two/${data.productId}`}
                                             className="offcanvas-wishlist-item-link">{data.name}</Link>
                                         <div className="offcanvas-wishlist-item-details">
-                                            <span className="offcanvas-wishlist-item-details-quantity">1 x
-                                            </span>
                                             <span className="offcanvas-wishlist-item-details-price">
-                                                {data.price}</span>
+                                                {data.price} TL</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="offcanvas-wishlist-item-delete text-right">
                                     <a href="#!" className="offcanvas-wishlist-item-delete"
-                                        onClick={() => rmFavProduct(data.id)}><i className="fa fa-trash"></i></a>
+                                        onClick={() => rmFavProduct(data.productId)}><i className="fa fa-trash"></i></a>
                                 </div>
                             </li>
                         ))}
-                    </ul>
-                    <ul className="offcanvas-wishlist-action-button">
-                        <li>
-                            <Link to="/wishlist" className="theme-btn-one btn-black-overlay btn_md">
-                                Favori Listesi</Link>
-                        </li>
                     </ul>
                 </div>
             </div>

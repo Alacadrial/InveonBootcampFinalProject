@@ -7,7 +7,7 @@ import Slider from "react-slick";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from 'react-router-dom';
 import { RatingStar } from "rating-star";
-import { getProductByIdAsync, updateCartAsync } from '../../../app/slices/product';
+import { addFavouriteAsync, getProductByIdAsync, updateCartAsync } from '../../../app/slices/product';
 
 const ProductDetailsTwo = () => {
     let { id } = useParams();
@@ -46,8 +46,8 @@ const ProductDetailsTwo = () => {
     }
 
     // Add to Favorite
-    const addToFav = async (id) => {
-        dispatch(addToFav(id))
+    const addToFav = async (productId) => {
+        dispatch(addFavouriteAsync(productId))
     }
 
  

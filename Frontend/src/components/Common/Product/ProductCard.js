@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {Link} from "react-router-dom";
 import {AiOutlineHeart} from 'react-icons/ai';
-import { AddToCart, addToFavorites, updateCartAsync } from "../../../app/slices/product";
+import { AddToCart, addFavouriteAsync, addToFavorites, updateCartAsync } from "../../../app/slices/product";
 
 //Her bir ürünü temsil edecek
 const ProductCard = (props) => {
@@ -12,9 +12,8 @@ const ProductCard = (props) => {
             dispatch(updateCartAsync({product: product, quantity: 1}))
         }
         
-        const favorilereEkle = async(id) => {
-            console.log("tıklandı");
-            dispatch(addToFavorites(id))
+        const favorilereEkle = async(product) => {
+            dispatch(addFavouriteAsync(product))
         }
     return(
         <>
@@ -31,7 +30,7 @@ const ProductCard = (props) => {
                    </span>
                    <div className="actions">
                      <a href="#!" className="action wishlist" title="Favorilere Ekle"
-                      onClick={() => favorilereEkle(props.data.productId)} ><AiOutlineHeart />
+                      onClick={() => favorilereEkle(props.data)} ><AiOutlineHeart />
 
                      </a>
                  </div>

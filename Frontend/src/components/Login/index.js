@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useSelector, useDispatch } from "react-redux";
 import Swal from 'sweetalert2';
 import { useNavigate } from "react-router-dom"
-import { loginAsync } from '../../app/slices/user';
+import { clearError, loginAsync } from '../../app/slices/user';
 import { getCartByUserId, getFavouritesAsync } from '../../app/slices/product';
 
 
@@ -13,6 +13,9 @@ const LoginArea = () => {
 
     let status = useSelector((state) => state.user.status);
     let user = useSelector((state) => state.user.user);
+    let error = useSelector((state) => state.user.error);
+
+    useEffect(() => {if(status) history("/");}, [])
 
     useEffect(()=>{
         if(status){
@@ -27,32 +30,28 @@ const LoginArea = () => {
         }
     }, [user]);
 
-    // Login
-    const login = (uname, password) => {
-        if(status){
+    useEffect(()=>{
+        if(error){
             Swal.fire({
-                icon: 'question',
-                title: ''+user.name,
-                html:
-                    'Zaten giriş yapmışsınız<br />' +
-                    '<b>' +
-                    'Dashboard</b> ' +
-                    '<b>Shop</b> page',
-            }).then((result) => {
-                if(result.isConfirmed) {
-                  history('/')
-                } else {
-                  // not clicked
-                }
-              });
-        }else{
-            dispatch(loginAsync({username: uname, pwd: password}))
+                icon: 'error',
+                title: 'Error during login.',
+                text: error
+            });
+            dispatch(clearError())
+        }
+    }, [error]);
+
+    // Login
+    const login = (username, password) => {
+        if(!status){
+            dispatch(loginAsync({username, password}))
         }
     }
 
     return (
         <>
-            <section id="login_area" className="ptb-100">
+        { !status ? 
+        <section id="login_area" className="ptb-100">
                 <div className="container">
                     <div className="row">
                         <div className="col-lg-6 offset-lg-3 col-md-12 col-sm-12 col-12">
@@ -82,7 +81,17 @@ const LoginArea = () => {
                         </div>
                     </div>
                 </div>
-            </section>
+        </section>
+        :
+        <div className='container'> 
+        <div className='row'>
+        <div className="col-lg-6 offset-lg-3 col-md-12 col-sm-12 col-12">
+            <h3>You are already logged in.</h3>
+        </div>
+        </div>
+        </div>
+        }
+            
         </>
     )
 }

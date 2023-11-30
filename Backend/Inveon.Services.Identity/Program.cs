@@ -6,10 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Inveon.Services.Identity;
 using Inveon.Services.Identity.DbContexts;
-using Inveon.Services.Identity.DbContexts;
 using Inveon.Services.Identity.Initializer;
-using Inveon.Services.Identity.Models;
-using Inveon.Services.Identity.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +30,9 @@ var builderProvider = builder.Services.AddIdentityServer(options =>
 .AddAspNetIdentity<ApplicationUser>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<ITokenService, DefaultTokenService>();
+builder.Services.AddScoped<IUserClaimsPrincipalFactory<ApplicationUser>, UserClaimsPrincipalFactory<ApplicationUser>>();
+
 builderProvider.AddDeveloperSigningCredential();
 var app = builder.Build();
 

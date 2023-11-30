@@ -1,6 +1,4 @@
-﻿using Duende.IdentityServer.Configuration;
-using Duende.IdentityServer.Events;
-using Duende.IdentityServer.Models;
+﻿using Duende.IdentityServer.Models;
 using Duende.IdentityServer.Services;
 using Duende.IdentityServer.Stores;
 using Duende.IdentityServer.Validation;
@@ -8,14 +6,9 @@ using IdentityModel;
 using Inveon.Services.Identity.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text.Json.Serialization;
-using Newtonsoft.Json;
 
 namespace Inveon.Services.Identity.CustomController
 {

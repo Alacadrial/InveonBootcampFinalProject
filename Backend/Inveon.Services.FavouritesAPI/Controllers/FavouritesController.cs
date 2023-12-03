@@ -44,8 +44,7 @@ namespace Inveon.Services.FavouritesAPI.Controllers
             try
             {
                 string userId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-                if (userId != dto.UserId)
-                    throw new Exception("Mismatch of the authenticated user and the ID from the DTO.");
+                dto.UserId = userId;
                 await _repository.AddFavouriteForUser(dto);
             }
             catch (Exception ex)

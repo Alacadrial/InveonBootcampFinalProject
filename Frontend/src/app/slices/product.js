@@ -335,10 +335,11 @@ export const getProductByIdAsync = createAsyncThunk(
 
 export const getCartByUserId = createAsyncThunk(
     'products/getCartByUserId',
-    async (userId) => {
+    async (payload, {getState}) => {
       try {
-        const url = `${CART_GET_URL}/${userId}`;
-        const response = await axios.get(url);
+        const token = getState().user.user.token;
+        const url = `${CART_URL}`;
+        const response = await axios.get(url, {"headers": {'Authorization': `Bearer ${token}`}});
         const data = response.data.result;
         console.log(data);
         return data;

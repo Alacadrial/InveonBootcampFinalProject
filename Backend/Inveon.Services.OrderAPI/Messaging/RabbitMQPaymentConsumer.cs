@@ -58,6 +58,7 @@ namespace Inveon.Services.OrderAPI.Messaging
         {
             try
             {
+                // These also can be pulled from environment variables
                 Options options = new Options();
                 options.ApiKey = "sandbox-9mPCoPiicPKZdnVSJAm6ReD1uwkWAyVh";
                 options.SecretKey = "sandbox-atpAq00e0fy4jH9dpEWELEBAVrG73iXR";
@@ -70,12 +71,7 @@ namespace Inveon.Services.OrderAPI.Messaging
                 }, options);
 
                 await _orderRepository.UpdateOrderPaymentStatusByCartHeaderId(Int32.Parse(res.BasketId), updatePaymentResultMessage.Status);
-                // burada aynı zamanda mail yollama işi için mesaj yollayabilirsin
-
-                // here we will retrive payment from iyzico and update table
-
-                //await _orderRepository.UpdateOrderPaymentStatus(updatePaymentResultMessage.OrderId,
-                //    updatePaymentResultMessage.Status);
+                // I should implement notification send after Payment status change, right now it only is there at direct non-3ds payment.
             }
             catch (Exception e)
             {

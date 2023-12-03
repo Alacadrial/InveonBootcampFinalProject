@@ -28,11 +28,13 @@ namespace Inveon.Services.ShoppingCartAPI.Controllers
             this._response = new ResponseDto();
         }
 
-        [HttpGet("GetCart/{userId}")]
-        public async Task<object> GetCart(string userId)
+        [HttpGet]
+        [Authorize]
+        public async Task<object> GetCart()
         {
             try
             {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
                 CartDto cartDto = await _cartRepository.GetCartByUserId(userId);
                 _response.Result = cartDto;
             }

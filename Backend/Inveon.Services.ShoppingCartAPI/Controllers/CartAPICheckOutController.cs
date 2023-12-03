@@ -63,7 +63,7 @@ namespace Inveon.Service.ShoppingCartAPI.Controllers
                 if (!string.IsNullOrEmpty(cartDto.CartHeader.CouponCode))
                 {
                     CouponDto coupon = await _couponRepository.GetCoupon(checkoutHeader.CouponCode);
-                    if (coupon != null)
+                    if (coupon.CouponCode != null)
                     {
                         checkoutHeader.DiscountTotal = checkoutHeader.OrderTotal * ( (100 - coupon.DiscountAmount) / 100 );
                     }

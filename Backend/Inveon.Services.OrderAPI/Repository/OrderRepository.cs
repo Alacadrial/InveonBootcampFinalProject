@@ -52,7 +52,7 @@ namespace Inveon.Services.OrderAPI.Repository
         public async Task UpdateOrderPaymentStatusByCartHeaderId(int cartHeaderId, bool paid)
         {
             await using var _db = new ApplicationDbContext(_dbContext);
-            var ordered = _db.OrderHeaders.OrderBy(u => u.CartHeaderId);
+            var ordered = _db.OrderHeaders.Where(u => u.CartHeaderId == cartHeaderId).OrderByDescending(u => u.OrderHeaderId);
             var orderHeaderFromDb = await ordered.FirstOrDefaultAsync(u => u.CartHeaderId == cartHeaderId);
             if (orderHeaderFromDb != null)
             {

@@ -16,7 +16,6 @@ namespace Inveon.Services.OrderAPI.Models.Dtos
         {
             this.OrderDetailsId = orderDetails.OrderDetailsId;
             this.OrderHeaderId = orderDetails.OrderHeaderId;
-            this.OrderHeader = orderDetails.OrderHeader;
             this.Price = orderDetails.Price;
             this.Count = orderDetails.Count;
             this.ProductName = orderDetails.ProductName;

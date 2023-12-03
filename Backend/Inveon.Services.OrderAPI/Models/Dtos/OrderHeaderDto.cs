@@ -6,6 +6,7 @@
         public double OrderTotal { get; set; }
         public double DiscountTotal { get; set; }
         public DateTime OrderTime { get; set; }
+        public string OrderTimeString { get; set; }
         public int CartTotalItems { get; set; }
         public List<OrderDetailsDto> OrderDetails { get; set; }
         public bool PaymentStatus { get; set; }
@@ -16,6 +17,7 @@
             this.OrderTotal = orderHeader.OrderTotal;
             this.DiscountTotal = orderHeader.DiscountTotal;
             this.OrderTime = orderHeader.OrderTime;
+            this.OrderTimeString = orderHeader.OrderTime.ToString("HH:mm:ss dd/MM/yyyy");
             this.CartTotalItems = orderHeader.CartTotalItems;
             this.OrderDetails = orderHeader.OrderDetails.Select(details => { return new OrderDetailsDto(details); }).ToList();
             this.PaymentStatus = orderHeader.PaymentStatus;

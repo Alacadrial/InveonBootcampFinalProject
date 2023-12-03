@@ -18,7 +18,12 @@ namespace Inveon.Services.OrderAPI.Repository
         public async Task<IEnumerable<OrderHeaderDto>> GetPaidOrders(string userId)
         {
             await using var _db = new ApplicationDbContext(_dbContext);
-            return _db.OrderHeaders.Where(u => u.UserId == userId && u.PaymentStatus == true).Select(orderHeader => new OrderHeaderDto(orderHeader)).ToList();
+            var paidOrders = _db.OrderHeaders.Where(u => u.UserId == userId && u.PaymentStatus == true);
+            foreach (var orderHeader in paidOrders)
+            {
+                orderHeader.OrderDetails = _db.OrderDetails.Where(u => u.OrderHeaderId == orderHeader.OrderHeaderId).ToList();
+            }
+            return paidOrders.Select(orderHeader => new OrderHeaderDto(orderHeader)).ToList();
         }
 
         public async Task<bool> AddOrder(OrderHeader orderHeader)

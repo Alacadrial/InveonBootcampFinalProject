@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import Swal from "sweetalert2";
-import { PRODUCT_URL, CART_GET_URL, CART_REMOVE_ITEM_URL, CART_URL, FAVOURITES_URL } from "../../urls/apiUrls";
+import { PRODUCT_URL, CART_GET_URL, CART_REMOVE_ITEM_URL, CART_URL, FAVOURITES_URL, ORDER_URL } from "../../urls/apiUrls";
 import axios from "axios";
 import { createUpdatePayloadMap } from "../../utils/utils";
 
@@ -11,6 +11,7 @@ const productsSlice = createSlice({
         products: [],
         carts: [],
         favorites: [],
+        orders: [],
         single: null,  // her bir ürün temsil edelr
         status: 'idle', // Added a status field to manage loading state
         error: null,   // Added an error field to capture errors
@@ -216,6 +217,13 @@ const productsSlice = createSlice({
                   }
                 }
               })
+            .addMatcher(
+              (action) => action.type.startsWith('products/getOrdersAsync'),
+              (state, action) => {
+                if (action.type.endsWith('/fulfilled')) {
+                  state.orders = action.payload;
+                }
+              })
           // We can also listen to another slice's action as such, clearing cart after user logs out.
           .addMatcher(
             (action) => action.type.startsWith('user/logout'),
@@ -408,6 +416,26 @@ export const deleteFavouriteAsync = createAsyncThunk(
       return {isSuccess: response.data.isSuccess, productId: productId};
   }
 );
+
+
+export const getOrdersAsync = createAsyncThunk(
+  'products/getOrdersAsync',
+  async (payload, {getState}) => {
+      const url = `${ORDER_URL}/paymentcompleted`;
+      const {token} = getState().user.user;
+      const response = await axios.get(
+        url,
+        {
+            headers: {
+              'Content-Type': 'application/json', 
+              'Authorization': `Bearer ${token}`
+            }
+        }
+      );
+      return response.data;
+  }
+);
+
 
 
 export const { AddToCart, updateProducts, updateCart, clearCart, addToFavorites, removeToFav, clearFav } = productsSlice.actions;

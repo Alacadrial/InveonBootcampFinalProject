@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import Swal from "sweetalert2";
-import { PRODUCT_URL, CART_GET_URL, CART_REMOVE_ITEM_URL, CART_URL, FAVOURITES_URL, ORDER_URL } from "../../urls/apiUrls";
+import { PRODUCT_URL, CART_GET_URL, CART_REMOVE_ITEM_URL, CART_URL, FAVOURITES_URL, ORDER_URL, APPLY_COUPON_URL } from "../../urls/apiUrls";
 import axios from "axios";
 import { createUpdatePayloadMap } from "../../utils/utils";
 
@@ -12,31 +12,15 @@ const productsSlice = createSlice({
         carts: [],
         favorites: [],
         orders: [],
+        coupon: null,
         single: null,  // her bir ürün temsil edelr
         status: 'idle', // Added a status field to manage loading state
         error: null,   // Added an error field to capture errors
     },
     reducers: {
-        //sepete ürün eklemek için kullanılacak
-        AddToCart: (state, action) => {
-            let id  = action.payload;
-            let sepeteEklenecekUrun = state.carts.find(item => item.productId === parseInt(id));
-            if (sepeteEklenecekUrun === undefined) {
-                //sepete eklemek istediğim ürün bilgilerine getirecek ilgili rest servisi çağırılır
-                let item = state.products.find(x => x.productId === id);
-                console.log(item);
-                item.quantity = 1;
-                state.carts.push(item);
-                Swal.fire(
-                    {
-                        title: 'Başarılı',
-                        text: "Ürün sepete eklendi!",
-                        icon: 'success',
-                        showConfirmButton: false,
-                        timer: 2000
-                    }
-                );
-            }
+        
+        clearError: (state, action) => {
+          state.error = null;
         },
         updateProducts: (state, action) => {
             console.log(action.payload)
@@ -224,6 +208,17 @@ const productsSlice = createSlice({
                   state.orders = action.payload;
                 }
               })
+            .addMatcher(
+              (action) => action.type.startsWith('products/applyCouponAsync',),
+              (state, action) => {
+                if (action.type.endsWith('/fulfilled')) {
+                  state.coupon = action.payload;
+                }
+                else if (action.type.endsWith('/rejected')) {
+                  console.log(action)
+                  state.error = action.payload.message;
+                }
+              })
           // We can also listen to another slice's action as such, clearing cart after user logs out.
           .addMatcher(
             (action) => action.type.startsWith('user/logout'),
@@ -231,6 +226,7 @@ const productsSlice = createSlice({
               if (action.type.endsWith('/fulfilled')) {
                 state.carts = [];
                 state.favorites = [];
+                state.coupon = null;
               }
             });
       },
@@ -436,8 +432,29 @@ export const getOrdersAsync = createAsyncThunk(
   }
 );
 
+export const applyCouponAsync = createAsyncThunk(
+  'products/applyCouponAsync',
+  async (couponCode, {getState, rejectWithValue}) => {
+      let token = getState().user.user.token;
+      let response = await axios.post(
+        APPLY_COUPON_URL,
+        couponCode,
+        {
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token}
+        }
+      )
+      if(response.status === 200 && response.data.isSuccess)
+        return response.data.result;
+      else if (response.status === 200)
+        return rejectWithValue({ message: response.data.errorMessages[0], rejectedWithValue: true });
+      else
+        return rejectWithValue({ message: "Error connecting to backend.", rejectedWithValue: true });
+  }
+);
 
 
-export const { AddToCart, updateProducts, updateCart, clearCart, addToFavorites, removeToFav, clearFav } = productsSlice.actions;
+
+
+export const { updateProducts, updateCart, clearCart, clearError, addToFavorites, removeToFav, clearFav } = productsSlice.actions;
 const productsReducer = productsSlice.reducer
 export default productsReducer

@@ -13,6 +13,7 @@ import { deleteFavouriteAsync, removeCartItemAsync } from '../../../app/slices/p
 const Header = () => {
     let carts = useSelector((state) => state.products.carts);
     let favorites = useSelector((state) => state.products.favorites);
+    let coupon = useSelector((state) => state.products.coupon);
     let {user, status} = useSelector((state) => state.user);
     const [click, setClick] = useState(false);
     const history = useNavigate();
@@ -29,7 +30,7 @@ const Header = () => {
     const cartTotal = () => {
         return carts.reduce(function (total, item) {
             return total + ((item.quantity || 1) * item.price)
-        }, 0)
+        }, 0) * (coupon == null ? 1 : (100-coupon.discountAmount)/100) 
     }
 
     const handleClick = () => {
@@ -323,6 +324,10 @@ const Header = () => {
                             </li>
                         ))}
                     </ul>
+                    {coupon && <div className="offcanvas-cart-total-price">
+                        <span className="offcanvas-cart-coupon-text">Aktif kupon: </span>
+                        <span className="offcanvas-cart-coupon-value">{coupon.couponCode}</span>
+                    </div>}
                     <div className="offcanvas-cart-total-price">
                         <span className="offcanvas-cart-total-price-text">Toplam :</span>
                         <span className="offcanvas-cart-total-price-value">{cartTotal()} TL</span>

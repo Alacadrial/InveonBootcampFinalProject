@@ -4,11 +4,14 @@ import { useSelector } from "react-redux";
 
 const TotalCart = (props) => {
     let carts = useSelector((state) => state.products.carts);
+    let coupon = useSelector((state) => state.products.coupon);
 
-    const cartTotal = () => {
+    const cartTotal = (isCouponApplied) => {
+        let couponMultiplier = (coupon === null) ? 1 : (100 - coupon.discountAmount) / 100;
+        
         return carts.reduce(function (total, item) {
-            return total + ((item.quantity || 1) * item.price)
-        }, 0)
+            return total + ((item.quantity || 1) * item.price);
+        }, 0) * (isCouponApplied ? couponMultiplier : 1);
     }
     return (
         <>
@@ -19,20 +22,13 @@ const TotalCart = (props) => {
                         <div className="coupon_inner">
                             <div className="cart_subtotal">
                                 <p>Alt Toplam : </p>
-                                <p className="cart_amount">${cartTotal()}</p>
+                                <p className="cart_amount">${cartTotal(false)}</p>
                             </div>
-                            <div className="cart_subtotal ">
-                                <p>Kargo</p>
-                                <p className="cart_amount"><span>Sabit Fiyat</span> TL</p>
-                            </div>
-                            <a href="#!">Kargo Hesapla</a>
-
                             <div className="cart_subtotal">
                                 <p>Toplam</p>
-                                <p className="cart_amount">${cartTotal()}</p>
+                                <p className="cart_amount">${cartTotal(true)}</p>
                             </div>
                             <div className="checkout_btn">
-
                                 <Link to="/checkout-one" className="theme-btn-one btn-black-overlay btn_sm">
                                     Alışverişi Tamamla
                                 </Link>
@@ -47,17 +43,11 @@ const TotalCart = (props) => {
                         <div className="coupon_inner">
                             <div className="cart_subtotal">
                                 <p>Alt Toplam : </p>
-                                <p className="cart_amount">{cartTotal()} TL</p>
+                                <p className="cart_amount">{cartTotal(false)} TL</p>
                             </div>
-                            <div className="cart_subtotal ">
-                                <p>Kargo</p>
-                                <p className="cart_amount"><span>Sabit Fiyat</span> TL</p>
-                            </div>
-                            <a href="#!">Kargo Hesapla</a>
-
                             <div className="cart_subtotal">
                                 <p>Toplam</p>
-                                <p className="cart_amount">{cartTotal()} TL</p>
+                                <p className="cart_amount">{cartTotal(true)} TL</p>
                             </div>
                             <div className="checkout_btn">
 

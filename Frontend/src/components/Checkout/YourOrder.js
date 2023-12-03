@@ -3,9 +3,16 @@ import { useSelector } from 'react-redux';
 import {Link} from "react-router-dom";
 const YourOrder = () => {
     let cart = useSelector((state) => state.products.carts);
-    useEffect(() => {
-        console.log(cart)
-    }, []);
+    let coupon = useSelector((state) => state.products.coupon);
+
+    const cartTotal = (isCouponApplied) => {
+        let couponMultiplier = (coupon === null) ? 1 : (100 - coupon.discountAmount) / 100;
+        
+        return cart.reduce(function (total, item) {
+            return total + ((item.quantity || 1) * item.price);
+        }, 0) * (isCouponApplied ? couponMultiplier : 1);
+    }
+
     return (
     <>
             <h3>Siparişiniz</h3>
@@ -37,7 +44,7 @@ const YourOrder = () => {
                     <tfoot>
                         <tr>
                             <th>Alt Toplam</th>
-                            <td>{cart.reduce((n, {price, quantity}) => n + price * quantity, 0)} TL</td>
+                            <td>{cartTotal(false)} TL</td>
                         </tr>
                         <tr>
                             <th>Kargo</th>
@@ -45,7 +52,7 @@ const YourOrder = () => {
                         </tr>
                         <tr className="order_total">
                             <th>Sipariş Toplamı </th>
-                            <td><b>{cart.reduce((n, {price, quantity}) => n + price * quantity, 0)} TL</b></td>
+                            <td><b>{cartTotal(true)} TL</b></td>
                         </tr>
                     </tfoot>
                 </table>

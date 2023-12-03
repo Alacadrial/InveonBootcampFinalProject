@@ -4,6 +4,7 @@ export const CART_URL = `${BASE_URL}/api/cart`;
 export const FAVOURITES_URL = `${BASE_URL}/api/favourites`;
 export const CART_GET_URL = `${BASE_URL}/api/cart/getcart`; 
 export const CART_REMOVE_ITEM_URL = `${BASE_URL}/api/cart/removefromcart`; 
+export const CHECKOUT_URL = `${BASE_URL}/api/cartc`; 
 export const ORDER_URL = `${BASE_URL}/api/order`;
 export const AUTH_URL = `${BASE_URL}/connect/token`;
 export const REVOKE_URL = `${BASE_URL}/connect/revocation`;

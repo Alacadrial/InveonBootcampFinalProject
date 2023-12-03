@@ -21,7 +21,7 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
             {
                 return JsonConvert.DeserializeObject<CouponDto>(Convert.ToString(resp.Result));
             }
-            return new CouponDto();
+            return null;
         }
     }
 }

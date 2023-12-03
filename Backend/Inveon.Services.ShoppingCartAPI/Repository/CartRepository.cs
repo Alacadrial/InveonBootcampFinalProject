@@ -10,20 +10,27 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
     {
         private readonly ApplicationDbContext _db;
         private IMapper _mapper;
+        private readonly ICouponRepository _couponRepository;
 
-        public CartRepository(ApplicationDbContext db, IMapper mapper)
+        public CartRepository(ApplicationDbContext db, IMapper mapper, ICouponRepository couponRepository)
         {
             _db = db;
             _mapper = mapper;
+            _couponRepository = couponRepository;
         }
 
-        public async Task<bool> ApplyCoupon(string userId, string couponCode)
+        public async Task<CouponDto> ApplyCoupon(string userId, string couponCode)
         {
             var cartFromDb = await _db.CartHeaders.FirstOrDefaultAsync(u => u.UserId == userId);
-            cartFromDb.CouponCode = couponCode;
-            _db.CartHeaders.Update(cartFromDb);
-            await _db.SaveChangesAsync();
-            return true;
+            var coupon = await _couponRepository.GetCoupon(couponCode);
+            if(coupon != null)
+            {
+                cartFromDb.CouponCode = couponCode;
+                _db.CartHeaders.Update(cartFromDb);
+                await _db.SaveChangesAsync();
+                return coupon;
+            }
+            return null;
         }
 
         public async Task<bool> ClearCart(string userId)

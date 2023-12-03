@@ -102,13 +102,22 @@ namespace Inveon.Services.ShoppingCartAPI.Controllers
         }
 
         [HttpPost("ApplyCoupon")]
-        public async Task<object> ApplyCoupon([FromBody] CartDto cartDto)
+        public async Task<object> ApplyCoupon([FromBody] string code)
         {
             try
             {
-                bool isSuccess = await _cartRepository.ApplyCoupon(cartDto.CartHeader.UserId,
-                    cartDto.CartHeader.CouponCode);
-                _response.Result = isSuccess;
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+                var coupon = await _cartRepository.ApplyCoupon(userId, code);
+                if (coupon != null)
+                {
+                    _response.IsSuccess = true;
+                    _response.Result = coupon;
+                }
+                else
+                {
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages = new List<string>() { "Coupon not found." };
+                }
             }
             catch (Exception ex)
             {

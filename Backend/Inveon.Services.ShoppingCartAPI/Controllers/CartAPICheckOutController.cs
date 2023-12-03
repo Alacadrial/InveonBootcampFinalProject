@@ -95,7 +95,7 @@ namespace Inveon.Service.ShoppingCartAPI.Controllers
                     {
                         checkoutHeader.PaymentMade = true;
                         _rabbitMQCartMessageSender.SendMessage(checkoutHeader, "checkoutqueue");
-                        _rabbitMQCartMessageSender.SendMessage(checkoutHeader, "emailcheckoutnotificationqueue");
+                        _rabbitMQCartMessageSender.SendMessage(checkoutHeader, "checkoutemailnotificationqueue");
                         await _cartRepository.ClearCart(userId);
                         return Ok();
                     }

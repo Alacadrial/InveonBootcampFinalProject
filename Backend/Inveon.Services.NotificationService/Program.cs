@@ -1,40 +1,26 @@
 ﻿using Inveon.Services.NotificationService.Consumer;
 using Inveon.Services.NotificationService.Interfaces;
+using Inveon.Services.OrderAPI.Messaging;
 using MassTransit;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using static MassTransit.MessageHeaders;
 
 class Program
 {
     static async Task Main(string[] args)
     {
-        var serviceProvider = new ServiceCollection()
-            .AddScoped<EmailNotificationService>()
-            .BuildServiceProvider();
-
-        using var scope = serviceProvider.CreateScope();
-        var emailNotificationService = scope.ServiceProvider.GetRequiredService<EmailNotificationService>();
-
-
-        IBusControl bus = Bus.Factory.CreateUsingRabbitMq(cfg =>
-        {
-            Uri uri = new Uri("rabbitmq://localhost");
-            cfg.Host(uri, h =>
-            {
-                h.Username("guest");
-                h.Password("guest");
-            });
-
-            cfg.ReceiveEndpoint("checkoutqueue", ep =>
-            {
-                ep.Consumer(() => new PurchaseNotificationConsumer(emailNotificationService));
-            });
-        });
-
-        await bus.StartAsync();
-
-        Console.WriteLine("Notification service is listening for purchase messages. Press enter to exit.");
+        Console.WriteLine(Environment.GetEnvironmentVariable("INVEON_EMAIL_ENV_VARIABLE"));
+        Console.WriteLine(Environment.GetEnvironmentVariable("INVEON_PASSWORD_ENV_VARIABLE"));
+        await CreateHostBuilder(args).Build().RunAsync();
         Console.ReadLine();
-
-        await bus.StopAsync();
     }
+
+    public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
+                .ConfigureServices((hostContext, services) =>
+                {
+                    services.AddHostedService<EmailConsumer>();
+                    services.AddScoped<EmailNotificationService>(); // Add other services if needed
+                });
 }

@@ -20,13 +20,13 @@ const AccountDetails = () => {
                                     <input type="radio" defaultValue="1" name="mr" checked readOnly /> Bay.</span>
                             </div>
                             <div className="default-form-box mb-20">
-                                <label>İbrahim</label>
-                                <input type="text" name="first-name" className="form-control" defaultValue=""
+                                <label>Adı</label>
+                                <input type="text" name="first-name" className="form-control" defaultValue="İbrahim"
                                     readOnly />
                             </div>
                             <div className="default-form-box mb-20">
-                                <label>Gökyar</label>
-                                <input type="text" name="last-name" className="form-control" defaultValue=""
+                                <label>Soyadı</label>
+                                <input type="text" name="last-name" className="form-control" defaultValue="Gökyar"
                                     readOnly />
                             </div>
                             <div className="default-form-box mb-20">

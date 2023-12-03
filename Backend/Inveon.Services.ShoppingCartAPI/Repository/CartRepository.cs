@@ -36,7 +36,6 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
                 _db.CartHeaders.Remove(cartHeaderFromDb);
                 await _db.SaveChangesAsync();
                 return true;
-
             }
             return false;
         }
@@ -94,7 +93,6 @@ namespace Inveon.Services.ShoppingCartAPI.Repository
                     }
                     else
                     {
-                        
                         //update the count / cart details
                         item.CartDetailsId = cartDetailsFromDb.CartDetailsId;
                         item.CartHeaderId = cartDetailsFromDb.CartHeaderId;

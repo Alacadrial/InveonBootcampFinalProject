@@ -1,0 +1,14 @@
+﻿<html>
+<head>
+    <script>
+        // Send payload to the main window
+        window.parent.postMessage({
+            success: '{{success}}',
+            errorMessage: '{{errorMessage}}'
+        }, '*');
+    </script>
+</head>
+<body>
+    <!-- Additional content if needed -->
+</body>
+</html>

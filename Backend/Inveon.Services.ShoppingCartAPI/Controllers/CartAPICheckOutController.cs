@@ -7,6 +7,10 @@ using Inveon.Services.ShoppingCartAPI.Messages;
 using Inveon.Services.ShoppingCartAPI.RabbitMQSender;
 using Inveon.Services.ShoppingCartAPI.Repository;
 using Inveon.Services.ShoppingCartAPI.Models.Dto;
+using System.Security.Claims;
+using Newtonsoft.Json;
+using Azure;
+using HandlebarsDotNet;
 
 namespace Inveon.Service.ShoppingCartAPI.Controllers
 {
@@ -20,6 +24,7 @@ namespace Inveon.Service.ShoppingCartAPI.Controllers
         // private readonly IMessageBus _messageBus;
         protected ResponseDto _response;
         private readonly IRabbitMQCartMessageSender _rabbitMQCartMessageSender;
+        private readonly Options _options;
         // IMessageBus messageBus,
         public CartAPICheckOutController(ICartRepository cartRepository,
             ICouponRepository couponRepository, IRabbitMQCartMessageSender rabbitMQCartMessageSender)
@@ -29,45 +34,76 @@ namespace Inveon.Service.ShoppingCartAPI.Controllers
             _rabbitMQCartMessageSender = rabbitMQCartMessageSender;
             //_messageBus = messageBus;
             this._response = new ResponseDto();
+            _options = new Options
+            {
+                ApiKey = "sandbox-9mPCoPiicPKZdnVSJAm6ReD1uwkWAyVh",
+                SecretKey = "sandbox-atpAq00e0fy4jH9dpEWELEBAVrG73iXR",
+                BaseUrl = "https://sandbox-api.iyzipay.com",
+            };
         }
+
 
         [HttpPost]
         [Authorize]
         public async Task<object> Checkout([FromBody] CheckoutHeaderDto checkoutHeader)
-
-
-
-
         {
             try
             {
-                CartDto cartDto = await _cartRepository.GetCartByUserId(checkoutHeader.UserId);
-                if (cartDto == null)
-                {
-                    return BadRequest();
-                }
+                var email = User.FindFirst(ClaimTypes.Email)!.Value;
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+                checkoutHeader.UserId = userId;
+                checkoutHeader.Email = email;
 
-                if (!string.IsNullOrEmpty(checkoutHeader.CouponCode))
+                CartDto cartDto = await _cartRepository.GetCartByUserId(userId);
+                if (cartDto == null || (cartDto != null && !cartDto.CartDetails.Any()))
+                {
+                    return BadRequest("Cart is empty.");
+                }
+                checkoutHeader.OrderTotal = cartDto.CartDetails.Sum(details => (details.Product.Price*details.Count));
+                if (!string.IsNullOrEmpty(cartDto.CartHeader.CouponCode))
                 {
                     CouponDto coupon = await _couponRepository.GetCoupon(checkoutHeader.CouponCode);
-                    if (checkoutHeader.DiscountTotal != coupon.DiscountAmount)
+                    if (coupon != null)
                     {
-                        _response.IsSuccess = false;
-                        _response.ErrorMessages = new List<string>() { "Coupon Price has changed, please confirm" };
-                        _response.DisplayMessage = "Coupon Price has changed, please confirm";
-                        return _response;
+                        checkoutHeader.DiscountTotal = checkoutHeader.OrderTotal * ( (100 - coupon.DiscountAmount) / 100 );
                     }
                 }
-
+                else
+                {
+                    checkoutHeader.DiscountTotal = checkoutHeader.OrderTotal;
+                }
                 checkoutHeader.CartDetails = cartDto.CartDetails;
-                //logic to add message to process order.
-                // await _messageBus.PublishMessage(checkoutHeader, "checkoutqueue");
+                checkoutHeader.CartHeaderId = cartDto.CartHeader.CartHeaderId;
 
-                ////rabbitMQ
-
-                Payment payment = OdemeIslemi(checkoutHeader);
-                _rabbitMQCartMessageSender.SendMessage(checkoutHeader, "checkoutqueue");
-                await _cartRepository.ClearCart(checkoutHeader.UserId);
+                if (checkoutHeader.ThreeD)
+                {
+                    ThreedsInitialize init = ThreeDInitiliaze(checkoutHeader);
+                    if (init.Status.ToLower() == "success")
+                    {
+                        _rabbitMQCartMessageSender.SendMessage(checkoutHeader, "checkoutqueue");
+                        return Ok(init);
+                    }
+                    else
+                    {
+                        return BadRequest(init.ErrorMessage);
+                    }
+                }
+                else
+                {
+                    Payment payment = MakePayment(checkoutHeader);
+                    if (payment.Status.ToLower() == "success")
+                    {
+                        checkoutHeader.PaymentMade = true;
+                        _rabbitMQCartMessageSender.SendMessage(checkoutHeader, "checkoutqueue");
+                        _rabbitMQCartMessageSender.SendMessage(checkoutHeader, "emailcheckoutnotificationqueue");
+                        await _cartRepository.ClearCart(userId);
+                        return Ok();
+                    }
+                    else
+                    {
+                        return BadRequest(payment.ErrorMessage);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -77,27 +113,70 @@ namespace Inveon.Service.ShoppingCartAPI.Controllers
             return _response;
         }
 
-        public Payment OdemeIslemi(CheckoutHeaderDto checkoutHeaderDto)
+
+        [HttpPost]
+        [Route("threedcallback")]
+        public async Task<object> ThreeDCallback([FromForm] ThreedConfirmationResponse response)
         {
+            var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "templates", "callback-template.html");
+            var templateContent = System.IO.File.ReadAllText(templatePath);
+            var template = Handlebars.Compile(templateContent);
 
-            CartDto cartDto = _cartRepository.GetCartByUserIdNonAsync(checkoutHeaderDto.UserId);
+            if (response.Status.ToLower() == "success")
+            {
+                CreateThreedsPaymentRequest request = new CreateThreedsPaymentRequest
+                {
+                    PaymentId = response.PaymentId,
+                    ConversationId = response.ConversationId.ToString(),
+                    Locale = Locale.TR.ToString(),
+                    ConversationData = response.ConversationData,
+                };
+                ThreedsPayment payment = ThreedsPayment.Create(request, _options);
+                if(payment.Status.ToLower() == "success")
+                {
+                    var payload = new { success = "3DSUCCESS", errorMessage = "" };
+                    var responseHtml = template(payload);
+                    // update payment status
+                    _rabbitMQCartMessageSender.SendMessage(new PaymentStatusUpdateMessage { PaymentId = payment.PaymentId, Status = true }, "PaymentOrderUpdateQueueName");
+                    return Content(responseHtml, "text/html");
+                }
+                else
+                {
+                    var payload = new { success = "3DFAIL", errorMessage = payment.ErrorMessage };
+                    var responseHtml = template(payload);
+                    return Content(responseHtml, "text/html");
+                }
+            }
+            else
+            {
+                var payload = new { success = "3DFAIL", errorMessage = "Failed 3D Secure." };
+                var responseHtml = template(payload);
+                return Content(responseHtml, "text/html");
+            }
+        }
 
-            Options options = new Options();
 
-            options.ApiKey = "sandbox-8zkTEIzQ8rikWsvPkL76V8kAvo4DpYuz";
-            options.SecretKey = "sandbox-56FjiYYrjkAuSqENtt0k8b7Ei03s8X61";
-            options.BaseUrl = "https://sandbox-api.iyzipay.com";
+        private Payment MakePayment(CheckoutHeaderDto checkoutHeaderDto)
+        { 
+            CreatePaymentRequest request = createRequestFromCheckoutDto(checkoutHeaderDto);
+            return Payment.Create(request, _options);
+        }
 
+
+        private ThreedsInitialize ThreeDInitiliaze(CheckoutHeaderDto checkoutHeaderDto)
+        {
+            CreatePaymentRequest request = createRequestFromCheckoutDto(checkoutHeaderDto);
+            request.CallbackUrl = "https://localhost:5050/api/cartc/threedcallback"; // endpoint for when 3D success or failure hit.
+            return ThreedsInitialize.Create(request, _options);
+        }
+
+        private CreatePaymentRequest createRequestFromCheckoutDto (CheckoutHeaderDto checkoutHeaderDto) 
+        {
             CreatePaymentRequest request = new CreatePaymentRequest();
             request.Locale = Locale.TR.ToString();
-            request.ConversationId = new Random().Next(1111, 9999).ToString();
-            request.Price = "1";
-            request.PaidPrice = "1.2";
-            //request.Price = "15";//checkoutHeaderDto.OrderTotal.ToString();
-            //request.PaidPrice = "15";//checkoutHeaderDto.OrderTotal.ToString();
+            request.ConversationId = new Random().Next(111111111, 999999999).ToString();
             request.Currency = Currency.TRY.ToString();
             request.Installment = 1;
-            request.BasketId = "B67832";
             request.BasketId = checkoutHeaderDto.CartHeaderId.ToString();
             request.PaymentChannel = PaymentChannel.WEB.ToString();
             request.PaymentGroup = PaymentGroup.PRODUCT.ToString();
@@ -109,12 +188,11 @@ namespace Inveon.Service.ShoppingCartAPI.Controllers
             paymentCard.ExpireYear = checkoutHeaderDto.ExpiryYear;
             paymentCard.Cvc = checkoutHeaderDto.CVV;
             paymentCard.RegisterCard = 0;
-            paymentCard.CardAlias = "Infotech";
+            paymentCard.CardAlias = "Inveon";
             request.PaymentCard = paymentCard;
 
             Buyer buyer = new Buyer();
-            //buyer.Id = cartDto.CartHeader.UserId;
-            buyer.Id = "BY789";
+            buyer.Id = checkoutHeaderDto.UserId;
             buyer.Name = checkoutHeaderDto.FirstName;
             buyer.Surname = checkoutHeaderDto.FirstName;
             buyer.GsmNumber = checkoutHeaderDto.Phone;
@@ -130,53 +208,36 @@ namespace Inveon.Service.ShoppingCartAPI.Controllers
             request.Buyer = buyer;
 
             Address shippingAddress = new Address();
-            shippingAddress.ContactName = "Jane Doe";
-            shippingAddress.City = "Istanbul";
-            shippingAddress.Country = "Turkey";
-            shippingAddress.Description = "Nidakule Göztepe, Merdivenköy Mah. Bora Sok. No:1";
-            shippingAddress.ZipCode = "34742";
+            shippingAddress.ContactName = $"{checkoutHeaderDto.FirstName} {checkoutHeaderDto.LastName}";
+            shippingAddress.City = checkoutHeaderDto.Country; ;
+            shippingAddress.Country = checkoutHeaderDto.City;
+            shippingAddress.Description = checkoutHeaderDto.Address;
+            shippingAddress.ZipCode = checkoutHeaderDto.ZipCode.ToString();
             request.ShippingAddress = shippingAddress;
 
             Address billingAddress = new Address();
-            billingAddress.ContactName = "Jane Doe";
-            billingAddress.City = "Istanbul";
-            billingAddress.Country = "Turkey";
-            billingAddress.Description = "Nidakule Göztepe, Merdivenköy Mah. Bora Sok. No:1";
-            billingAddress.ZipCode = "34742";
+            billingAddress.ContactName = $"{checkoutHeaderDto.FirstName} {checkoutHeaderDto.LastName}";
+            billingAddress.City = checkoutHeaderDto.Country;
+            billingAddress.Country = checkoutHeaderDto.City;
+            billingAddress.Description = checkoutHeaderDto.Address;
+            billingAddress.ZipCode = checkoutHeaderDto.ZipCode.ToString();
             request.BillingAddress = billingAddress;
 
-            List<BasketItem> basketItems = new List<BasketItem>();
-            BasketItem firstBasketItem = new BasketItem();
-            firstBasketItem.Id = "BI101";
-            firstBasketItem.Name = "Binocular";
-            firstBasketItem.Category1 = "Collectibles";
-            firstBasketItem.Category2 = "Accessories";
-            firstBasketItem.ItemType = BasketItemType.PHYSICAL.ToString();
-            firstBasketItem.Price = "0.3";
-            basketItems.Add(firstBasketItem);
+            List<BasketItem> basketItems = checkoutHeaderDto.CartDetails.Select(details =>
+            {
+                BasketItem basketItem = new BasketItem();
+                basketItem.Id = details.ProductId.ToString();
+                basketItem.Name = details.Product.Name;
+                basketItem.Category1 = details.Product.CategoryName;
+                basketItem.Price = (details.Product.Price*details.Count).ToString();
+                basketItem.ItemType = BasketItemType.PHYSICAL.ToString();
+                return basketItem;
+            }).ToList();
 
-            BasketItem secondBasketItem = new BasketItem();
-            secondBasketItem.Id = "BI102";
-            secondBasketItem.Name = "Game code";
-            secondBasketItem.Category1 = "Game";
-            secondBasketItem.Category2 = "Online Game Items";
-            secondBasketItem.ItemType = BasketItemType.VIRTUAL.ToString();
-            secondBasketItem.Price = "0.5";
-            basketItems.Add(secondBasketItem);
-
-            BasketItem thirdBasketItem = new BasketItem();
-            thirdBasketItem.Id = "BI103";
-            thirdBasketItem.Name = "Usb";
-            thirdBasketItem.Category1 = "Electronics";
-            thirdBasketItem.Category2 = "Usb / Cable";
-            thirdBasketItem.ItemType = BasketItemType.PHYSICAL.ToString();
-            thirdBasketItem.Price = "0.2";
-            basketItems.Add(thirdBasketItem);
             request.BasketItems = basketItems;
-
-            //Payment payment = Payment.Create(request, options);
-
-            return Payment.Create(request, options);
+            request.Price = checkoutHeaderDto.OrderTotal.ToString();
+            request.PaidPrice = checkoutHeaderDto.DiscountTotal.ToString();
+            return request;
         }
     }
 }

@@ -4,6 +4,9 @@ using RabbitMQ.Client.Events;
 using RabbitMQ.Client;
 using System.Text;
 using Newtonsoft.Json;
+using Iyzipay.Request;
+using Iyzipay.Model;
+using Iyzipay;
 
 namespace Inveon.Services.OrderAPI.Messaging
 {
@@ -29,9 +32,9 @@ namespace Inveon.Services.OrderAPI.Messaging
 
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
-            _channel.ExchangeDeclare(ExchangeName, ExchangeType.Direct);
+            //_channel.ExchangeDeclare(ExchangeName, ExchangeType.Direct);
             _channel.QueueDeclare(PaymentOrderUpdateQueueName, false, false, false, null);
-            _channel.QueueBind(PaymentOrderUpdateQueueName, ExchangeName, "PaymentOrder");
+            //_channel.QueueBind(PaymentOrderUpdateQueueName, ExchangeName, "PaymentOrder");
         }
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -55,8 +58,24 @@ namespace Inveon.Services.OrderAPI.Messaging
         {
             try
             {
-                await _orderRepository.UpdateOrderPaymentStatus(updatePaymentResultMessage.OrderId,
-                    updatePaymentResultMessage.Status);
+                Options options = new Options();
+                options.ApiKey = "sandbox-9mPCoPiicPKZdnVSJAm6ReD1uwkWAyVh";
+                options.SecretKey = "sandbox-atpAq00e0fy4jH9dpEWELEBAVrG73iXR";
+                options.BaseUrl = "https://sandbox-api.iyzipay.com";
+
+                var res = ThreedsPayment.Retrieve(new RetrievePaymentRequest
+                {
+                    Locale = Locale.TR.ToString(),
+                    PaymentId = updatePaymentResultMessage.PaymentId.ToString(),
+                }, options);
+
+                await _orderRepository.UpdateOrderPaymentStatusByCartHeaderId(Int32.Parse(res.BasketId), updatePaymentResultMessage.Status);
+                // burada aynı zamanda mail yollama işi için mesaj yollayabilirsin
+
+                // here we will retrive payment from iyzico and update table
+
+                //await _orderRepository.UpdateOrderPaymentStatus(updatePaymentResultMessage.OrderId,
+                //    updatePaymentResultMessage.Status);
             }
             catch (Exception e)
             {

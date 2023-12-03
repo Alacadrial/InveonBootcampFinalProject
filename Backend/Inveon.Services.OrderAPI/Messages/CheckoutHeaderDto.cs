@@ -19,5 +19,6 @@
         public string ExpiryYear { get; set; }
         public int CartTotalItems { get; set; }
         public IEnumerable<CartDetailsDto> CartDetails { get; set; }
+        public bool PaymentMade { get; set; } = false;
     }
 }

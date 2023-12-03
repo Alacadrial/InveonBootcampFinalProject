@@ -54,6 +54,7 @@ namespace Inveon.Services.OrderAPI.Messaging
             OrderHeader orderHeader = new()
             {
                 UserId = checkoutHeaderDto.UserId,
+                CartHeaderId = checkoutHeaderDto.CartHeaderId,
                 FirstName = checkoutHeaderDto.FirstName,
                 LastName = checkoutHeaderDto.LastName,
                 OrderDetails = new List<OrderDetails>(),
@@ -66,7 +67,7 @@ namespace Inveon.Services.OrderAPI.Messaging
                 ExpiryYear = checkoutHeaderDto.ExpiryYear,
                 OrderTime = DateTime.Now,
                 OrderTotal = checkoutHeaderDto.OrderTotal,
-                PaymentStatus = false,
+                PaymentStatus = checkoutHeaderDto.PaymentMade,
                 Phone = checkoutHeaderDto.Phone,
                 PickupDateTime = checkoutHeaderDto.PickupDateTime
             };
@@ -84,30 +85,6 @@ namespace Inveon.Services.OrderAPI.Messaging
             }
 
             await _orderRepository.AddOrder(orderHeader);
-
-
-            PaymentRequestMessage paymentRequestMessage = new()
-            {
-                Name = orderHeader.FirstName + " " + orderHeader.LastName,
-                CardNumber = orderHeader.CardNumber,
-                CVV = orderHeader.CVV,
-                ExpiryMonth = orderHeader.ExpiryMonth,
-                ExpiryYear = orderHeader.ExpiryYear,
-                OrderId = orderHeader.OrderHeaderId,
-                OrderTotal = orderHeader.OrderTotal,
-                Email = orderHeader.Email
-            };
-
-            try
-            {
-                //await _messageBus.PublishMessage(paymentRequestMessage, orderPaymentProcessTopic);
-                //await args.CompleteMessageAsync(args.Message);
-                _rabbitMQOrderMessageSender.SendMessage(paymentRequestMessage, "orderpaymentprocesstopic");
-            }
-            catch (Exception e)
-            {
-                throw;
-            }
         }
     }
 }

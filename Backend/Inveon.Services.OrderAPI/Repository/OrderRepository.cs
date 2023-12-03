@@ -35,5 +35,17 @@ namespace Inveon.Services.OrderAPI.Repository
                 await _db.SaveChangesAsync();
             }
         }
+
+        public async Task UpdateOrderPaymentStatusByCartHeaderId(int cartHeaderId, bool paid)
+        {
+            await using var _db = new ApplicationDbContext(_dbContext);
+            var ordered = _db.OrderHeaders.OrderBy(u => u.CartHeaderId);
+            var orderHeaderFromDb = await ordered.FirstOrDefaultAsync(u => u.CartHeaderId == cartHeaderId);
+            if (orderHeaderFromDb != null)
+            {
+                orderHeaderFromDb.PaymentStatus = paid;
+                await _db.SaveChangesAsync();
+            }
+        }
     }
 }

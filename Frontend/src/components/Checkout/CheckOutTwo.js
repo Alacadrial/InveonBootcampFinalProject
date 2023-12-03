@@ -71,7 +71,7 @@ const CheckOutTwo = () => {
             .catch(error => {
                 Swal.fire(
                     {
-                        title: 'Errror',
+                        title: 'Error',
                         text: error.response.data,
                         icon: 'error'
                     }
